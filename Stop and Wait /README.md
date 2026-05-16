@@ -18,7 +18,7 @@ Stop and Wait Protocol is a flow control protocol used in computer networks.
 In this protocol:
 
 - Sender sends one frame
-- Sender waits for acknowledgment (ACK)
+- Sender waits for acknowledgment
 - Receiver sends acknowledgment
 - Sender sends next frame only after receiving ACK
 
@@ -28,48 +28,53 @@ In this protocol:
 
 Flow control controls the speed of data transmission between sender and receiver.
 
-It prevents data loss when sender sends data faster than receiver can process.
+It prevents sender from sending data faster than receiver can process.
 
 ---
 
 ## Frame
 
-A frame is a unit of data transmitted over a network.
+A frame is a unit of data transmitted through network.
 
 In this program:
 Frame numbers are sent from client to server.
 
-Example:
+## Example
 
 ```text
-0, 1, 2, 3 ...
+0 1 2 3
 ```
 
 ---
 
-## Acknowledgment (ACK)
+# Acknowledgment (ACK)
 
 ACK is a message sent by receiver to sender.
 
-It confirms that the frame was received successfully.
+It confirms successful reception of frame.
 
-Example:
+In this program:  
+Server sends frame number as acknowledgment.
+
+## Example
 
 ```text
-ACK for frame 0
+0
+1
+2
 ```
 
 ---
 
-## Socket Programming
+# Socket Programming
 
 Socket programming is a method used for communication between two systems over a network.
 
-Socket acts as an endpoint for communication.
+Socket acts as endpoint for communication.
 
 ---
 
-## TCP
+# TCP
 
 TCP stands for:
 
@@ -78,8 +83,8 @@ Transmission Control Protocol
 TCP is:
 - Reliable
 - Connection oriented
-- Error checking supported
-- Ordered data delivery
+- Ordered
+- Error checked
 
 TCP ensures data reaches correctly.
 
@@ -87,86 +92,125 @@ TCP ensures data reaches correctly.
 
 # How the Program Works
 
-1. Server creates socket
-2. Server waits for connection
-3. Client connects to server
-4. Client sends frame
-5. Server receives frame
-6. Server sends ACK
-7. Client receives ACK
-8. Next frame is sent
-9. Process repeats until all frames are sent
+1. Server creates TCP socket
+2. Server binds socket with port number
+3. Server waits for client connection
+4. Client connects to server
+5. Client sends one frame
+6. Server receives frame
+7. Server sends acknowledgment
+8. Client waits for ACK
+9. Next frame is sent
+10. Process repeats until all frames are sent
 
 ---
 
-# Algorithm
+# ALGORITHM
 
-### START
+START
 
-### Step 1
-Create socket
-
-```c
-socket(AF_INET, SOCK_STREAM, 0);
-```
-
-### Step 2
-Bind socket with IP and port
+1. Create socket
 
 ```c
-bind(server_fd, (struct sockaddr *)&address, sizeof(address));
+sockfd = socket(AF_INET, SOCK_STREAM, 0);
 ```
 
-### Step 3
-Listen for client connection
+2. Bind socket with IP address and port number
 
 ```c
-listen(server_fd, 3);
+bind(sockfd,
+     (struct sockaddr *)&server,
+     sizeof(server));
 ```
 
-### Step 4
-Accept client connection
+3. Listen for client connection
 
 ```c
-accept(server_fd, (struct sockaddr *)&address, &addrlen);
+listen(sockfd, 3);
 ```
 
-### Step 5
-Client sends frame
+4. Accept client connection
 
 ```c
-send(sock, buffer, strlen(buffer), 0);
+newsockfd = accept(sockfd,
+                   (struct sockaddr *)&client,
+                   &clientlen);
 ```
 
-### Step 6
-Server receives frame
+5. Read total number of frames
 
 ```c
-read(new_socket, buffer, sizeof(buffer));
+scanf("%d", &totalframes);
 ```
 
-### Step 7
-Server sends acknowledgment
+6. Repeat until all frames are sent
 
 ```c
-send(new_socket, ack, strlen(ack), 0);
+while(frame < totalframes)
 ```
 
-### Step 8
-Client receives acknowledgment
+7. Convert frame number into string
 
 ```c
-read(sock, buffer, sizeof(buffer));
+sprintf(buffer, "%d", frame);
 ```
 
-### Step 9
-Repeat until all frames are sent
+8. Client sends frame
 
 ```c
-while(frame < total_frames)
+send(sockfd,
+     buffer,
+     sizeof(buffer),
+     0);
 ```
 
-### STOP
+9. Server receives frame
+
+```c
+read(newsockfd,
+     buffer,
+     sizeof(buffer));
+```
+
+10. Server sends acknowledgment
+
+```c
+send(newsockfd,
+     buffer,
+     sizeof(buffer),
+     0);
+```
+
+11. Client receives acknowledgment
+
+```c
+read(sockfd,
+     buffer,
+     sizeof(buffer));
+```
+
+12. If acknowledgment is received
+
+      Increment frame number
+
+```c
+frame++;
+```
+
+13. Repeat until all frames are transmitted successfully
+
+```c
+while(frame < totalframes)
+```
+
+14. Close sockets
+
+```c
+close(sockfd);
+close(newsockfd);
+```
+
+STOP
 
 ---
 
@@ -177,127 +221,169 @@ while(frame < total_frames)
 | socket() | Creates socket |
 | bind() | Binds socket with IP and port |
 | listen() | Waits for client |
-| accept() | Accepts connection |
-| connect() | Connects to server |
+| accept() | Accepts client connection |
+| connect() | Connects client to server |
 | send() | Sends data |
 | read() | Receives data |
 | close() | Closes socket |
-
----
-
-# Sample Output
-
-## Server Side
-
-```text
-Server is listening on port 8080
-Connection established with client
-
-Server: Received frame 0
-Server: Sent acknowledgment for frame 0
-
-Server: Received frame 1
-Server: Sent acknowledgment for frame 1
-
-Server: Received frame 2
-Server: Sent acknowledgment for frame 2
-
-Connection closed by client
-```
-
----
-
-## Client Side
-
-```text
-Enter the total number of frames to send: 3
-
-Client: Sent frame 0
-Client: Received acknowledgment: ACK for frame 0
-
-Client: Sent frame 1
-Client: Received acknowledgment: ACK for frame 1
-
-Client: Sent frame 2
-Client: Received acknowledgment: ACK for frame 2
-
-All frames sent successfully
-```
-
----
-
-# Advantages of Stop and Wait Protocol
-
-- Simple implementation
-- Reliable communication
-- Easy error handling
-
----
-
-# Disadvantages of Stop and Wait Protocol
-
-- Slow transmission
-- Low efficiency
-- Sender waits after every frame
-
----
 
 # Viva Questions and Answers
 
 ## 1. What is Stop and Wait Protocol?
 
-It is a protocol where sender sends one frame and waits for acknowledgment before sending the next frame.
+Stop and Wait Protocol is a flow control protocol where sender sends one frame and waits for acknowledgment before sending next frame.
 
 ---
 
-## 2. Why is acknowledgment important?
+## 2. What is acknowledgment (ACK)?
 
-Acknowledgment confirms successful reception of frame.
+ACK is a message sent by receiver to confirm successful reception of frame.
 
 ---
 
-## 3. What happens if ACK is not received?
+## 3. Why is ACK important?
+
+ACK helps sender know whether frame reached receiver correctly.
+
+---
+
+## 4. What happens if ACK is not received?
 
 Sender retransmits the frame.
 
 ---
 
-## 4. What is flow control?
+## 5. What is flow control?
 
-Flow control controls the rate of data transmission between sender and receiver.
-
----
-
-## 5. Which protocol is used here?
-
-TCP protocol is used.
+Flow control controls the speed of data transmission between sender and receiver.
 
 ---
 
-## 6. Why is TCP used?
-
-TCP provides reliable and connection oriented communication.
-
----
-
-## 7. What is the disadvantage of Stop and Wait Protocol?
-
-It is slow because sender waits after every frame.
-
----
-
-## 8. What is a frame?
+## 6. What is a frame?
 
 A frame is a unit of data transmitted through network.
 
 ---
 
-## 9. What is the role of sender?
+## 7. Which protocol is used in this program?
+
+TCP protocol is used.
+
+---
+
+## 8. Why is TCP used?
+
+TCP provides:
+- Reliable communication
+- Ordered delivery
+- Error checking
+
+---
+
+## 9. What is socket programming?
+
+Socket programming is communication between systems using sockets.
+
+---
+
+## 10. What is a socket?
+
+A socket is an endpoint used for sending and receiving data.
+
+---
+
+## 11. What is the role of sender?
 
 Sender sends frames and waits for acknowledgment.
 
 ---
 
-## 10. What is the role of receiver?
+## 12. What is the role of receiver?
 
 Receiver receives frames and sends acknowledgment.
+
+---
+
+## 13. What is the disadvantage of Stop and Wait Protocol?
+
+It is slow because sender waits after every frame.
+
+---
+
+## 14. What is the advantage of Stop and Wait Protocol?
+
+It is simple and reliable.
+
+---
+
+## 15. What is TCP?
+
+TCP stands for Transmission Control Protocol.
+
+It is a reliable and connection oriented protocol.
+
+---
+
+## 16. What is the use of socket()?
+
+socket() creates a socket for communication.
+
+---
+
+## 17. What is the use of bind()?
+
+bind() connects socket with IP address and port number.
+
+---
+
+## 18. What is the use of listen()?
+
+listen() waits for client connection requests.
+
+---
+
+## 19. What is the use of accept()?
+
+accept() accepts client connection.
+
+---
+
+## 20. What is the use of connect()?
+
+connect() connects client to server.
+
+---
+
+## 21. What is the use of send()?
+
+send() sends data through socket.
+
+---
+
+## 22. What is the use of read()?
+
+read() receives data from socket.
+
+---
+
+## 23. What is the use of close()?
+
+close() closes socket connection.
+
+---
+
+## 24. What is localhost?
+
+localhost means same computer.
+
+IP address:
+127.0.0.1
+
+---
+
+## 25. What is a port number?
+
+Port number identifies a specific application or process in network communication.
+
+Example:
+8080
