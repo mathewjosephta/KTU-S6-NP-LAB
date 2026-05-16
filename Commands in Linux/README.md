@@ -7,18 +7,6 @@ and networking commands in Linux. :contentReference[oaicite:0]{index=0}
 
 --------------------------------------------------
 
-FIRST UNDERSTAND THIS FLOW
-
-1. Check your network details
-2. Check internet connection
-3. Find website IP address
-4. Track packet path
-5. View active connections
-6. Connect to remote systems
-7. Transfer files
-8. Understand configuration files
-
---------------------------------------------------
 
 1. ifconfig
 
