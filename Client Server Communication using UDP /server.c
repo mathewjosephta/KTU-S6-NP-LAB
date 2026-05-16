@@ -3,25 +3,22 @@
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 
 int main()
 {
-    int sockfd, newsockfd;
+    int sockfd;
 
     struct sockaddr_in server, client;
 
-    int clientlen = sizeof(client);
+    int len = sizeof(client);
 
-    char buffer[1024];
+    char str[100];
+    char result[100];
 
-    int frame;
+    int i, j, flag = 1;
 
-    int readval;
-
-    // Create TCP socket
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    // Create UDP socket
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 
     if (sockfd < 0)
     {
@@ -31,7 +28,7 @@ int main()
 
     // Server details
     server.sin_family = AF_INET;
-    server.sin_port = htons(8080);
+    server.sin_port = htons(8090);
     server.sin_addr.s_addr = INADDR_ANY;
 
     // Bind socket
@@ -39,57 +36,48 @@ int main()
          (struct sockaddr *)&server,
          sizeof(server));
 
-    // Listen for client
-    listen(sockfd, 3);
+    printf("Server waiting...\n");
 
-    printf("Server is listening on port 8080\n");
+    // Receive string from client
+    recvfrom(sockfd,
+             str,
+             sizeof(str),
+             0,
+             (struct sockaddr *)&client,
+             &len);
 
-    // Accept client connection
-    newsockfd = accept(sockfd,
-                       (struct sockaddr *)&client,
-                       (socklen_t *)&clientlen);
+    printf("Received string: %s\n", str);
 
-    printf("Connection established with client\n");
+    // Check palindrome
+    j = strlen(str) - 1;
 
-    // Receive frames continuously
-    while (1)
+    for (i = 0; i < j; i++, j--)
     {
-        // Clear buffer
-        memset(buffer, 0, sizeof(buffer));
-
-        // Read frame
-        readval = read(newsockfd,
-                       buffer,
-                       sizeof(buffer));
-
-        if (readval <= 0)
+        if (str[i] != str[j])
         {
-            printf("Connection closed by client\n");
+            flag = 0;
             break;
         }
-
-        // Convert string to integer
-        sscanf(buffer, "%d", &frame);
-
-        printf("Server: Received frame %d\n", frame);
-
-        // Create acknowledgment
-        sprintf(buffer,
-                "ACK for frame %d",
-                frame);
-
-        // Send acknowledgment
-        send(newsockfd,
-             buffer,
-             strlen(buffer),
-             0);
-
-        printf("Server: Sent acknowledgment for frame %d\n",
-               frame);
     }
 
-    // Close sockets
-    close(newsockfd);
+    if (flag)
+    {
+        strcpy(result, "Palindrome");
+    }
+    else
+    {
+        strcpy(result, "Not Palindrome");
+    }
+
+    // Send result to client
+    sendto(sockfd,
+           result,
+           sizeof(result),
+           0,
+           (struct sockaddr *)&client,
+           len);
+
+    // Close socket
     close(sockfd);
 
     return 0;
