@@ -1,3 +1,5 @@
+// STOP AND WAIT - CLIENT SIDE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,8 +16,11 @@ int main()
 
     char buffer[100];
 
+    int frame = 0;
+    int totalframes;
+
     int ack;
-    int i;
+    int readval;
 
     // Create TCP socket
     sockfd = socket(AF_INET,
@@ -47,55 +52,51 @@ int main()
         return 0;
     }
 
-    printf("Connected to receiver\n");
+    printf("Connected to server\n");
 
-    // Send total frames
-    sprintf(buffer, "%d", 8);
+    // Input total frames
+    printf("Enter total number of frames: ");
+    scanf("%d", &totalframes);
 
-    write(sockfd,
-          buffer,
-          sizeof(buffer));
-
-    printf("Frames Sending : ");
-
-    for (i = 0; i < 8; i++)
+    // Send frames one by one
+    while (frame < totalframes)
     {
-        printf("%d ", i);
+        // Convert frame number to string
+        sprintf(buffer, "%d", frame);
+
+        // Send frame
+        send(sockfd,
+             buffer,
+             sizeof(buffer),
+             0);
+
+        printf("Client: Sent frame %d\n",
+               frame);
+
+        // Clear buffer
+        memset(buffer, 0, sizeof(buffer));
+
+        // Receive acknowledgment
+        readval = read(sockfd,
+                       buffer,
+                       sizeof(buffer));
+
+        if (readval > 0)
+        {
+            ack = atoi(buffer);
+
+            printf("Client: Received acknowledgment for frame %d\n",
+                   ack);
+
+            frame++;
+        }
+        else
+        {
+            printf("Acknowledgment not received\n");
+        }
     }
 
-    printf("\n");
-
-    // Receive lost frame ACK
-    read(sockfd,
-         buffer,
-         sizeof(buffer));
-
-    ack = atoi(buffer);
-
-    printf("Frame %d not sent properly\n",
-           ack);
-
-    printf("Resending Frame : %d\n",
-           ack);
-
-    // Resend lost frame
-    sprintf(buffer,
-            "%d",
-            ack + 1);
-
-    write(sockfd,
-          buffer,
-          sizeof(buffer));
-
-    // Receive completion message
-    read(sockfd,
-         buffer,
-         sizeof(buffer));
-
-    if (strcmp(buffer, "end") == 0)
-    {
-        printf("All frames sent successfully\n");
-    }
+    printf("All frames sent successfully\n");
 
     // Close socket
     close(sockfd);
