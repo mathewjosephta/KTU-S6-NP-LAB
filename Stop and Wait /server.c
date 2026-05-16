@@ -1,79 +1,112 @@
+// STOP AND WAIT - SERVER SIDE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-
-#define PORT 8080
-#define SIZE 1024
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 int main()
 {
-    int server_fd, new_socket;
-    struct sockaddr_in address;
+    int sockfd, newsockfd;
 
-    int addrlen = sizeof(address);
+    struct sockaddr_in server, client;
 
-    char buffer[SIZE];
+    int clientlen = sizeof(client);
+
+    char buffer[100];
 
     int frame;
+    int readval;
 
-    // Create socket
-    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    // Create TCP socket
+    sockfd = socket(AF_INET,
+                    SOCK_STREAM,
+                    0);
 
-    if (server_fd < 0)
+    if (sockfd < 0)
     {
         printf("Socket creation failed\n");
         return 0;
     }
 
     // Server details
-    address.sin_family = AF_INET;
-    address.sin_port = htons(PORT);
-    address.sin_addr.s_addr = INADDR_ANY;
+    server.sin_family = AF_INET;
+    server.sin_port = htons(8080);
+    server.sin_addr.s_addr = INADDR_ANY;
 
     // Bind socket
-    bind(server_fd, (struct sockaddr *)&address, sizeof(address));
+    if (bind(sockfd,
+             (struct sockaddr *)&server,
+             sizeof(server)) < 0)
+    {
+        printf("Binding failed\n");
+        return 0;
+    }
 
-    // Listen for connection
-    listen(server_fd, 3);
+    // Listen for client
+    if (listen(sockfd, 3) < 0)
+    {
+        printf("Listening failed\n");
+        return 0;
+    }
 
-    printf("Server is listening on port %d\n", PORT);
+    printf("Server is listening on port 8080\n");
 
-    // Accept client
-    new_socket = accept(server_fd,
-                        (struct sockaddr *)&address,
-                        (socklen_t *)&addrlen);
+    // Accept client connection
+    newsockfd = accept(sockfd,
+                       (struct sockaddr *)&client,
+                       (socklen_t *)&clientlen);
+
+    if (newsockfd < 0)
+    {
+        printf("Accept failed\n");
+        return 0;
+    }
 
     printf("Connection established with client\n");
 
-    // Receive frames
+    // Receive frames continuously
     while (1)
     {
-        memset(buffer, 0, SIZE);
+        // Clear buffer
+        memset(buffer, 0, sizeof(buffer));
 
-        int valread = read(new_socket, buffer, SIZE);
+        // Read frame
+        readval = read(newsockfd,
+                       buffer,
+                       sizeof(buffer));
 
-        if (valread <= 0)
+        // Client disconnected
+        if (readval <= 0)
         {
             printf("Connection closed by client\n");
             break;
         }
 
+        // Convert string to integer
         sscanf(buffer, "%d", &frame);
 
-        printf("Server: Received frame %d\n", frame);
+        printf("Server: Received frame %d\n",
+               frame);
 
         // Send acknowledgment
-        sprintf(buffer, "ACK for frame %d", frame);
+        sprintf(buffer, "%d", frame);
 
-        send(new_socket, buffer, strlen(buffer), 0);
+        send(newsockfd,
+             buffer,
+             sizeof(buffer),
+             0);
 
-        printf("Server: Sent acknowledgment for frame %d\n", frame);
+        printf("Server: Sent acknowledgment for frame %d\n",
+               frame);
     }
 
-    close(new_socket);
-    close(server_fd);
+    // Close sockets
+    close(newsockfd);
+    close(sockfd);
 
     return 0;
 }
