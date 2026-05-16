@@ -8,19 +8,20 @@
 
 int main()
 {
-    int sockfd;
+    int sockfd, newsockfd;
 
     struct sockaddr_in server, client;
 
     int clientlen = sizeof(client);
 
-    int a[2][2], b[2][2], result[2][2];
-    int flat[100];
+    char buffer[1024];
 
-    int i, j, k;
+    int frame;
 
-    // Create UDP socket
-    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    int readval;
+
+    // Create TCP socket
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
     if (sockfd < 0)
     {
@@ -30,91 +31,65 @@ int main()
 
     // Server details
     server.sin_family = AF_INET;
-    server.sin_port = htons(8090);
+    server.sin_port = htons(8080);
     server.sin_addr.s_addr = INADDR_ANY;
 
     // Bind socket
-    if (bind(sockfd,
-             (struct sockaddr *)&server,
-             sizeof(server)) < 0)
+    bind(sockfd,
+         (struct sockaddr *)&server,
+         sizeof(server));
+
+    // Listen for client
+    listen(sockfd, 3);
+
+    printf("Server is listening on port 8080\n");
+
+    // Accept client connection
+    newsockfd = accept(sockfd,
+                       (struct sockaddr *)&client,
+                       (socklen_t *)&clientlen);
+
+    printf("Connection established with client\n");
+
+    // Receive frames continuously
+    while (1)
     {
-        printf("Binding failed\n");
-        return 0;
-    }
+        // Clear buffer
+        memset(buffer, 0, sizeof(buffer));
 
-    printf("Server is waiting...\n");
+        // Read frame
+        readval = read(newsockfd,
+                       buffer,
+                       sizeof(buffer));
 
-    // Receive first matrix
-    recvfrom(sockfd,
-             flat,
-             sizeof(flat),
-             0,
-             (struct sockaddr *)&client,
-             &clientlen);
-
-    // Convert array to matrix
-    k = 0;
-
-    for (i = 0; i < 2; i++)
-    {
-        for (j = 0; j < 2; j++)
+        if (readval <= 0)
         {
-            a[i][j] = flat[k++];
-        }
-    }
-
-    // Receive second matrix
-    recvfrom(sockfd,
-             flat,
-             sizeof(flat),
-             0,
-             (struct sockaddr *)&client,
-             &clientlen);
-
-    // Convert array to matrix
-    k = 0;
-
-    for (i = 0; i < 2; i++)
-    {
-        for (j = 0; j < 2; j++)
-        {
-            b[i][j] = flat[k++];
-        }
-    }
-
-    // Matrix addition
-    printf("\nMatrix Addition Result:\n");
-
-    k = 0;
-
-    for (i = 0; i < 2; i++)
-    {
-        for (j = 0; j < 2; j++)
-        {
-            result[i][j] =
-                a[i][j] + b[i][j];
-
-            printf("%d\t",
-                   result[i][j]);
-
-            flat[k++] =
-                result[i][j];
+            printf("Connection closed by client\n");
+            break;
         }
 
-        printf("\n");
+        // Convert string to integer
+        sscanf(buffer, "%d", &frame);
+
+        printf("Server: Received frame %d\n", frame);
+
+        // Create acknowledgment
+        sprintf(buffer,
+                "ACK for frame %d",
+                frame);
+
+        // Send acknowledgment
+        send(newsockfd,
+             buffer,
+             strlen(buffer),
+             0);
+
+        printf("Server: Sent acknowledgment for frame %d\n",
+               frame);
     }
 
-    // Send result matrix
-    sendto(sockfd,
-           flat,
-           sizeof(flat),
-           0,
-           (struct sockaddr *)&client,
-           clientlen);
-
-    printf("\nResult sent successfully\n");
-
-    // Close socket
+    // Close sockets
+    close(newsockfd);
     close(sockfd);
 
     return 0;
