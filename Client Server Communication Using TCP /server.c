@@ -1,77 +1,80 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
-#include <string.h>
 #include <netinet/in.h>
-#include <unistd.h>
 
 int main()
 {
-    int socdef, newsock, readval;
-    struct sockaddr_in addr;
+    int sockfd, newsockfd;
+    int readval;
+
+    struct sockaddr_in server, client;
+
+    int clientlen = sizeof(client);
 
     char str[100], temp;
 
-    int addrlen = sizeof(addr);
+    int i, j, k;
 
-    // Create socket
-    socdef = socket(AF_INET, SOCK_STREAM, 0);
+    // Create TCP socket
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
-    // Check socket creation
-    if (socdef == 0)
+    if (sockfd < 0)
     {
-        printf("Socket creation failed");
-        return -1;
+        printf("Socket creation failed\n");
+        return 0;
     }
 
-    // Define address family
-    addr.sin_family = AF_INET;
+    // Server details
+    server.sin_family = AF_INET;
+    server.sin_port = htons(8086);
+    server.sin_addr.s_addr = INADDR_ANY;
 
-    // Define port number
-    addr.sin_port = htons(8086);
-
-    // Accept connections from any IP
-    addr.sin_addr.s_addr = INADDR_ANY;
-
-    // Bind socket with IP and port
-    if (bind(socdef, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+    // Bind socket
+    if (bind(sockfd,
+             (struct sockaddr *)&server,
+             sizeof(server)) < 0)
     {
-        printf("Binding failed");
-        return -1;
+        printf("Binding failed\n");
+        return 0;
     }
 
     printf("Bind created\n");
 
-    // Listen for client connections
-    if (listen(socdef, 3) < 0)
+    // Listen for client
+    if (listen(sockfd, 3) < 0)
     {
-        printf("Listening failed");
-        return -1;
+        printf("Listening failed\n");
+        return 0;
     }
 
     printf("Listening....\n");
 
     // Accept client connection
-    if ((newsock = accept(socdef,
-        (struct sockaddr *)&addr,
-        (socklen_t *)&addrlen)) < 0)
+    newsockfd = accept(sockfd,
+                       (struct sockaddr *)&client,
+                       (socklen_t *)&clientlen);
+
+    if (newsockfd < 0)
     {
-        printf("Error in new socket creation");
-        return -1;
+        printf("Accept failed\n");
+        return 0;
     }
 
     printf("New socket created\n");
 
-    // Receive string from client
-    readval = read(newsock, str, sizeof(str));
+    // Receive string
+    readval = read(newsockfd,
+                   str,
+                   sizeof(str));
 
-    int i, j, k;
-
-    // Find length of string
+    // Find string length
     k = strlen(str);
 
-    // Reverse the string
+    // Reverse string
     for (i = 0, j = k - 1; i < j; i++, j--)
     {
         temp = str[i];
@@ -79,12 +82,15 @@ int main()
         str[j] = temp;
     }
 
-    // Send reversed string to client
-    send(newsock, str, strlen(str), 0);
+    // Send reversed string
+    send(newsockfd,
+         str,
+         sizeof(str),
+         0);
 
     // Close sockets
-    close(newsock);
-    close(socdef);
+    close(newsockfd);
+    close(sockfd);
 
     return 0;
 }
