@@ -20,7 +20,7 @@ int main()
     int i, j, k;
 
     // Create UDP socket
-    sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 
     if (sockfd < 0)
     {
@@ -32,7 +32,8 @@ int main()
     server.sin_family = AF_INET;
     server.sin_port = htons(8090);
 
-    inet_pton(AF_INET, "127.0.0.1", &server.sin_addr);
+    inet_pton(AF_INET, "127.0.0.1",
+              &server.sin_addr);
 
     // Input first matrix
     printf("Enter elements for 1st matrix:\n");
@@ -41,12 +42,14 @@ int main()
     {
         for (j = 0; j < 2; j++)
         {
-            printf("[%d][%d]: ", i + 1, j + 1);
+            printf("[%d][%d]: ",
+                   i + 1, j + 1);
+
             scanf("%d", &a[i][j]);
         }
     }
 
-    // Convert matrix to array
+    // Convert first matrix to array
     k = 0;
 
     for (i = 0; i < 2; i++)
@@ -58,8 +61,12 @@ int main()
     }
 
     // Send first matrix
-    sendto(sockfd, flat, sizeof(flat), 0,
-           (struct sockaddr *)&server, serverlen);
+    sendto(sockfd,
+           flat,
+           sizeof(flat),
+           0,
+           (struct sockaddr *)&server,
+           serverlen);
 
     // Input second matrix
     printf("\nEnter elements for 2nd matrix:\n");
@@ -68,12 +75,14 @@ int main()
     {
         for (j = 0; j < 2; j++)
         {
-            printf("[%d][%d]: ", i + 1, j + 1);
+            printf("[%d][%d]: ",
+                   i + 1, j + 1);
+
             scanf("%d", &b[i][j]);
         }
     }
 
-    // Convert matrix to array
+    // Convert second matrix to array
     k = 0;
 
     for (i = 0; i < 2; i++)
@@ -85,12 +94,20 @@ int main()
     }
 
     // Send second matrix
-    sendto(sockfd, flat, sizeof(flat), 0,
-           (struct sockaddr *)&server, serverlen);
+    sendto(sockfd,
+           flat,
+           sizeof(flat),
+           0,
+           (struct sockaddr *)&server,
+           serverlen);
 
     // Receive result matrix
-    recvfrom(sockfd, flat, sizeof(flat), 0,
-             (struct sockaddr *)&server, &serverlen);
+    recvfrom(sockfd,
+             flat,
+             sizeof(flat),
+             0,
+             (struct sockaddr *)&server,
+             &serverlen);
 
     // Display result
     printf("\nResult matrix received from server:\n");
@@ -107,6 +124,7 @@ int main()
         printf("\n");
     }
 
+    // Close socket
     close(sockfd);
 
     return 0;
