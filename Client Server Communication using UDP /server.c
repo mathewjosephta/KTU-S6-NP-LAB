@@ -9,6 +9,7 @@
 int main()
 {
     int sockfd;
+
     struct sockaddr_in server, client;
 
     int clientlen = sizeof(client);
@@ -19,7 +20,7 @@ int main()
     int i, j, k;
 
     // Create UDP socket
-    sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 
     if (sockfd < 0)
     {
@@ -33,7 +34,9 @@ int main()
     server.sin_addr.s_addr = INADDR_ANY;
 
     // Bind socket
-    if (bind(sockfd, (struct sockaddr *)&server, sizeof(server)) < 0)
+    if (bind(sockfd,
+             (struct sockaddr *)&server,
+             sizeof(server)) < 0)
     {
         printf("Binding failed\n");
         return 0;
@@ -42,9 +45,14 @@ int main()
     printf("Server is waiting...\n");
 
     // Receive first matrix
-    recvfrom(sockfd, flat, sizeof(flat), 0,
-             (struct sockaddr *)&client, &clientlen);
+    recvfrom(sockfd,
+             flat,
+             sizeof(flat),
+             0,
+             (struct sockaddr *)&client,
+             &clientlen);
 
+    // Convert array to matrix
     k = 0;
 
     for (i = 0; i < 2; i++)
@@ -56,9 +64,14 @@ int main()
     }
 
     // Receive second matrix
-    recvfrom(sockfd, flat, sizeof(flat), 0,
-             (struct sockaddr *)&client, &clientlen);
+    recvfrom(sockfd,
+             flat,
+             sizeof(flat),
+             0,
+             (struct sockaddr *)&client,
+             &clientlen);
 
+    // Convert array to matrix
     k = 0;
 
     for (i = 0; i < 2; i++)
@@ -78,22 +91,30 @@ int main()
     {
         for (j = 0; j < 2; j++)
         {
-            result[i][j] = a[i][j] + b[i][j];
+            result[i][j] =
+                a[i][j] + b[i][j];
 
-            printf("%d\t", result[i][j]);
+            printf("%d\t",
+                   result[i][j]);
 
-            flat[k++] = result[i][j];
+            flat[k++] =
+                result[i][j];
         }
 
         printf("\n");
     }
 
-    // Send result to client
-    sendto(sockfd, flat, sizeof(flat), 0,
-           (struct sockaddr *)&client, clientlen);
+    // Send result matrix
+    sendto(sockfd,
+           flat,
+           sizeof(flat),
+           0,
+           (struct sockaddr *)&client,
+           clientlen);
 
     printf("\nResult sent successfully\n");
 
+    // Close socket
     close(sockfd);
 
     return 0;
