@@ -1,64 +1,60 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
 #include <string.h>
 #include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 int main()
 {
-    int socdef, readval;
-    struct sockaddr_in addr;
+    int sockfd;
+    int readval;
+
+    struct sockaddr_in server;
+
     char str[100];
 
-    // Create socket
-    socdef = socket(AF_INET, SOCK_STREAM, 0);
+    // Create TCP socket
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
-    // Check socket creation
-    if (socdef == 0)
+    if (sockfd < 0)
     {
-        printf("Socket creation failed");
-        return -1;
+        printf("Socket creation failed\n");
+        return 0;
     }
 
-    // Initialize address structure to zero
-    memset(&addr, 0, sizeof(addr));
+    // Server details
+    server.sin_family = AF_INET;
+    server.sin_port = htons(8086);
 
-    // Define address family
-    addr.sin_family = AF_INET;
+    inet_pton(AF_INET, "127.0.0.1",
+              &server.sin_addr);
 
-    // Define port number
-    addr.sin_port = htons(8086);
-
-    // Convert IP address into binary form
-    if (inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr) < 0)
+    // Connect to server
+    if (connect(sockfd,
+                (struct sockaddr *)&server,
+                sizeof(server)) < 0)
     {
-        printf("Error");
-        return -1;
+        printf("Error in connection\n");
+        return 0;
     }
 
-    // Connect client to server
-    if (connect(socdef, (struct sockaddr *)&addr, sizeof(addr)) < 0)
-    {
-        printf("Error in connection");
-        return -1;
-    }
-
-    // Read string from user
+    // Input string
     printf("Enter the string: ");
     scanf("%s", str);
 
     // Send string to server
-    send(socdef, str, strlen(str), 0);
+    send(sockfd, str, sizeof(str), 0);
 
-    // Receive reversed string from server
-    readval = read(socdef, str, sizeof(str));
+    // Receive reversed string
+    readval = read(sockfd, str, sizeof(str));
 
-    // Display reversed string
+    // Display output
     printf("Reversed string from server: %s\n", str);
 
     // Close socket
-    close(socdef);
+    close(sockfd);
 
     return 0;
 }
