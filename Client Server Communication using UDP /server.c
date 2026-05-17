@@ -3,6 +3,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 int main()
 {
@@ -10,7 +12,7 @@ int main()
 
     struct sockaddr_in server, client;
 
-    int len = sizeof(client);
+    socklen_t len = sizeof(client);
 
     char str[100];
     char result[100];
@@ -32,9 +34,13 @@ int main()
     server.sin_addr.s_addr = INADDR_ANY;
 
     // Bind socket
-    bind(sockfd,
-         (struct sockaddr *)&server,
-         sizeof(server));
+    if (bind(sockfd,
+             (struct sockaddr *)&server,
+             sizeof(server)) < 0)
+    {
+        printf("Binding failed\n");
+        return 0;
+    }
 
     printf("Server waiting...\n");
 
@@ -48,7 +54,7 @@ int main()
 
     printf("Received string: %s\n", str);
 
-    // Check palindrome
+    // Palindrome checking
     j = strlen(str) - 1;
 
     for (i = 0; i < j; i++, j--)
@@ -60,6 +66,7 @@ int main()
         }
     }
 
+    // Store result
     if (flag)
     {
         strcpy(result, "Palindrome");
@@ -72,7 +79,7 @@ int main()
     // Send result to client
     sendto(sockfd,
            result,
-           sizeof(result),
+           strlen(result) + 1,
            0,
            (struct sockaddr *)&client,
            len);
