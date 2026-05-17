@@ -10,14 +10,11 @@ int main()
 {
     int sockfd;
     int readval;
-
     struct sockaddr_in server;
-
     char str[100];
 
     // Create TCP socket
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
     if (sockfd < 0)
     {
         printf("Socket creation failed\n");
@@ -28,13 +25,10 @@ int main()
     server.sin_family = AF_INET;
     server.sin_port = htons(8086);
 
-    inet_pton(AF_INET, "127.0.0.1",
-              &server.sin_addr);
+    inet_pton(AF_INET, "127.0.0.1",&server.sin_addr);
 
     // Connect to server
-    if (connect(sockfd,
-                (struct sockaddr *)&server,
-                sizeof(server)) < 0)
+    if (connect(sockfd,(struct sockaddr *)&server,sizeof(server)) < 0)
     {
         printf("Error in connection\n");
         return 0;
