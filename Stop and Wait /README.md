@@ -105,7 +105,7 @@ TCP ensures data reaches correctly.
 
 ---
 
-# ALGORITHM
+# SERVER SIDE ALGORITHM
 
 START
 
@@ -137,39 +137,36 @@ newsockfd = accept(sockfd,
                    &clientlen);
 ```
 
-5. Read total number of frames
+5. Repeat continuously
 
 ```c
-scanf("%d", &totalframes);
+while(1)
 ```
 
-6. Repeat until all frames are sent
-
-```c
-while(frame < totalframes)
-```
-
-7. Convert frame number into string
-
-```c
-sprintf(buffer, "%d", frame);
-```
-
-8. Client sends frame
-
-```c
-send(sockfd,
-     buffer,
-     sizeof(buffer),
-     0);
-```
-
-9. Server receives frame
+6. Server receives frame
 
 ```c
 read(newsockfd,
      buffer,
      sizeof(buffer));
+```
+
+7. Check whether client disconnected
+
+```c
+if(readval <= 0)
+```
+
+8. Convert received string into integer frame number
+
+```c
+sscanf(buffer, "%d", &frame);
+```
+
+9. Display received frame
+
+```c
+printf("Received Frame %d", frame);
 ```
 
 10. Server sends acknowledgment
@@ -181,7 +178,79 @@ send(newsockfd,
      0);
 ```
 
-11. Client receives acknowledgment
+11. Repeat until client disconnects
+
+```c
+while(1)
+```
+
+12. Close sockets
+
+```c
+close(newsockfd);
+close(sockfd);
+```
+
+STOP
+
+# CLIENT SIDE ALGORITHM
+
+START
+
+1. Create socket
+
+```c
+sockfd = socket(AF_INET, SOCK_STREAM, 0);
+```
+
+2. Connect client to server
+
+```c
+connect(sockfd,
+        (struct sockaddr *)&server,
+        sizeof(server));
+```
+
+3. Read total number of frames
+
+```c
+scanf("%d", &totalframes);
+```
+
+4. Initialize frame number
+
+```c
+frame = 0;
+```
+
+5. Repeat until all frames are sent
+
+```c
+while(frame < totalframes)
+```
+
+6. Convert frame number into string
+
+```c
+sprintf(buffer, "%d", frame);
+```
+
+7. Client sends frame
+
+```c
+send(sockfd,
+     buffer,
+     sizeof(buffer),
+     0);
+```
+
+8. Display sent frame
+
+```c
+printf("Sent Frame %d", frame);
+```
+
+9. Client waits for acknowledgment
 
 ```c
 read(sockfd,
@@ -189,9 +258,19 @@ read(sockfd,
      sizeof(buffer));
 ```
 
-12. If acknowledgment is received
+10. Convert acknowledgment into integer
 
-      Increment frame number
+```c
+ack = atoi(buffer);
+```
+
+11. Display acknowledgment
+
+```c
+printf("ACK Received %d", ack);
+```
+
+12. Increment frame number
 
 ```c
 frame++;
@@ -203,11 +282,10 @@ frame++;
 while(frame < totalframes)
 ```
 
-14. Close sockets
+14. Close socket
 
 ```c
 close(sockfd);
-close(newsockfd);
 ```
 
 STOP
