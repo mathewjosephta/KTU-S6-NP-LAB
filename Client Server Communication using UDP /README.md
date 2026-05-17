@@ -124,33 +124,44 @@ It means client and server are running on the same computer.
 
 # Algorithm
 
-### START
+# CLIENT ALGORITHM
 
-### Step 1
+START
+
+## Step 1
 
 Create UDP socket
 
 ```c
-socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+socket(AF_INET, SOCK_DGRAM, 0);
 ```
 
-### Step 2
+## Step 2
 
-Bind socket with IP and port
+Specify server IP address and port
 
 ```c
-bind(sockfd, (struct sockaddr *)&server, sizeof(server));
+server.sin_family = AF_INET;
+server.sin_port = htons(8090);
 ```
 
-### Step 3
+## Step 3
 
-Client enters string
+Convert IP address
+
+```c
+inet_pton(AF_INET, "127.0.0.1", &server.sin_addr);
+```
+
+## Step 4
+
+Read string from user
 
 ```c
 scanf("%s", str);
 ```
 
-### Step 4
+## Step 5
 
 Send string to server
 
@@ -159,16 +170,83 @@ sendto(sockfd, str, sizeof(str), 0,
 (struct sockaddr *)&server, len);
 ```
 
-### Step 5
+## Step 6
 
-Server receives string
+Receive result from server
+
+```c
+recvfrom(sockfd, result, sizeof(result), 0,
+(struct sockaddr *)&server, &len);
+```
+
+## Step 7
+
+Display result
+
+```c
+printf("%s", result);
+```
+
+## Step 8
+
+Close socket
+
+```c
+close(sockfd);
+```
+
+STOP
+
+---
+
+# SERVER ALGORITHM
+
+START
+
+## Step 1
+
+Create UDP socket
+
+```c
+socket(AF_INET, SOCK_DGRAM, 0);
+```
+
+## Step 2
+
+Specify server IP address and port
+
+```c
+server.sin_family = AF_INET;
+server.sin_port = htons(8090);
+server.sin_addr.s_addr = INADDR_ANY;
+```
+
+## Step 3
+
+Bind socket with IP and port
+
+```c
+bind(sockfd, (struct sockaddr *)&server, sizeof(server));
+```
+
+## Step 4
+
+Receive string from client
 
 ```c
 recvfrom(sockfd, str, sizeof(str), 0,
 (struct sockaddr *)&client, &len);
 ```
 
-### Step 6
+## Step 5
+
+Find string length
+
+```c
+strlen(str);
+```
+
+## Step 6
 
 Check palindrome
 
@@ -176,7 +254,15 @@ Check palindrome
 if(str[i] != str[j])
 ```
 
-### Step 7
+## Step 7
+
+Store result
+
+```c
+strcpy(result, "Palindrome");
+```
+
+## Step 8
 
 Send result to client
 
@@ -185,16 +271,15 @@ sendto(sockfd, result, sizeof(result), 0,
 (struct sockaddr *)&client, len);
 ```
 
-### Step 8
+## Step 9
 
-Client receives result
+Close socket
 
 ```c
-recvfrom(sockfd, result, sizeof(result), 0,
-(struct sockaddr *)&server, &len);
+close(sockfd);
 ```
 
-### STOP
+STOP
 
 ---
 
