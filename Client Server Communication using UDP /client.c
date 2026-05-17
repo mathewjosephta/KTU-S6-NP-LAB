@@ -3,6 +3,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 int main()
 {
@@ -10,7 +12,7 @@ int main()
 
     struct sockaddr_in server;
 
-    int len = sizeof(server);
+    socklen_t len = sizeof(server);
 
     char str[100];
     char result[100];
@@ -39,7 +41,7 @@ int main()
     // Send string to server
     sendto(sockfd,
            str,
-           sizeof(str),
+           strlen(str) + 1,
            0,
            (struct sockaddr *)&server,
            len);
