@@ -97,73 +97,156 @@ It means the client and server are running on the same computer.
 
 # Algorithm
 
-### START
+# CLIENT ALGORITHM
 
-### Step 1
+START
+
+## Step 1
 Create socket
 
 ```c
 socket(AF_INET, SOCK_STREAM, 0);
 ```
 
-### Step 2
+## Step 2
+Specify server IP address and port
+
+```c
+server.sin_family = AF_INET;
+server.sin_port = htons(8086);
+```
+
+## Step 3
+Convert IP address
+
+```c
+inet_pton(AF_INET, "127.0.0.1", &server.sin_addr);
+```
+
+## Step 4
+Connect to server
+
+```c
+connect(sockfd, (struct sockaddr *)&server, sizeof(server));
+```
+
+## Step 5
+Read string from user
+
+```c
+scanf("%s", str);
+```
+
+## Step 6
+Send string to server
+
+```c
+send(sockfd, str, sizeof(str), 0);
+```
+
+## Step 7
+Receive reversed string
+
+```c
+read(sockfd, str, sizeof(str));
+```
+
+## Step 8
+Display reversed string
+
+```c
+printf("%s", str);
+```
+
+## Step 9
+Close socket
+
+```c
+close(sockfd);
+```
+
+STOP
+
+---
+
+# SERVER ALGORITHM
+
+START
+
+## Step 1
+Create socket
+
+```c
+socket(AF_INET, SOCK_STREAM, 0);
+```
+
+## Step 2
+Specify server IP address and port
+
+```c
+server.sin_family = AF_INET;
+server.sin_port = htons(8086);
+server.sin_addr.s_addr = INADDR_ANY;
+```
+
+## Step 3
 Bind socket with IP and port
 
 ```c
-bind(socdef, (struct sockaddr *)&addr, sizeof(addr));
+bind(sockfd, (struct sockaddr *)&server, sizeof(server));
 ```
 
-### Step 3
+## Step 4
 Listen for client connection
 
 ```c
-listen(socdef, 3);
+listen(sockfd, 3);
 ```
 
-### Step 4
+## Step 5
 Accept client connection
 
 ```c
-accept(socdef, (struct sockaddr *)&addr, &addrlen);
+accept(sockfd, (struct sockaddr *)&client, &clientlen);
 ```
 
-### Step 5
-Client sends string
+## Step 6
+Receive string from client
 
 ```c
-send(socdef, str, sizeof(str), 0);
+read(newsockfd, str, sizeof(str));
 ```
 
-### Step 6
-Server receives string
+## Step 7
+Find string length
 
 ```c
-read(newsock, str, sizeof(str));
+strlen(str);
 ```
 
-### Step 7
+## Step 8
 Reverse the string
 
 ```c
 str[i] = str[j];
 ```
 
-### Step 8
-Server sends reversed string
+## Step 9
+Send reversed string
 
 ```c
-send(newsock, str, sizeof(str), 0);
+send(newsockfd, str, sizeof(str), 0);
 ```
 
-### Step 9
-Client receives reversed string
+## Step 10
+Close sockets
 
 ```c
-read(socdef, str, sizeof(str));
+close(newsockfd);
+close(sockfd);
 ```
 
-### STOP
-
+STOP
 ---
 
 # Important Socket Functions
