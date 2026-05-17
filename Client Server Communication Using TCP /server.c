@@ -8,20 +8,14 @@
 
 int main()
 {
-    int sockfd, newsockfd;
-    int readval;
-
-    struct sockaddr_in server, client;
-
+    int sockfd, newsockfd, readval;
     int clientlen = sizeof(client);
-
-    char str[100], temp;
-
     int i, j, k;
+    struct sockaddr_in server, client;
+    char str[100], temp;
 
     // Create TCP socket
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
     if (sockfd < 0)
     {
         printf("Socket creation failed\n");
@@ -34,14 +28,11 @@ int main()
     server.sin_addr.s_addr = INADDR_ANY;
 
     // Bind socket
-    if (bind(sockfd,
-             (struct sockaddr *)&server,
-             sizeof(server)) < 0)
+    if (bind(sockfd,(struct sockaddr *)&server,sizeof(server)) < 0)
     {
         printf("Binding failed\n");
         return 0;
     }
-
     printf("Bind created\n");
 
     // Listen for client
@@ -50,26 +41,20 @@ int main()
         printf("Listening failed\n");
         return 0;
     }
-
     printf("Listening....\n");
 
     // Accept client connection
-    newsockfd = accept(sockfd,
-                       (struct sockaddr *)&client,
-                       (socklen_t *)&clientlen);
+    newsockfd = accept(sockfd,(struct sockaddr *)&client,(socklen_t *)&clientlen);
 
     if (newsockfd < 0)
     {
         printf("Accept failed\n");
         return 0;
     }
-
     printf("New socket created\n");
 
     // Receive string
-    readval = read(newsockfd,
-                   str,
-                   sizeof(str));
+    readval = read(newsockfd,str,sizeof(str));
 
     // Find string length
     k = strlen(str);
