@@ -9,9 +9,9 @@
 int main()
 {
     int sockfd, newsockfd, readval;
+    struct sockaddr_in server, client;
     int clientlen = sizeof(client);
     int i, j, k;
-    struct sockaddr_in server, client;
     char str[100], temp;
 
     // Create TCP socket
