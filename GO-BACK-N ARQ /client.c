@@ -13,6 +13,8 @@ int main()
 
     struct sockaddr_in server;
 
+    socklen_t serverlen = sizeof(server);
+
     struct timeval timeout;
 
     char buffer[100];
@@ -22,17 +24,17 @@ int main()
 
     int start = 0;
     int end;
+
     int frame = 0;
 
     int ack;
     int readval;
 
     int i;
-    int resendflag = 0;
 
-    // Create TCP socket
+    // Create UDP socket
     sockfd = socket(AF_INET,
-                    SOCK_STREAM,
+                    SOCK_DGRAM,
                     0);
 
     if (sockfd < 0)
@@ -43,6 +45,9 @@ int main()
 
     printf("Socket successfully created\n");
 
+    // Initialize structure
+    memset(&server, 0, sizeof(server));
+
     // Server details
     server.sin_family = AF_INET;
     server.sin_port = htons(8080);
@@ -51,7 +56,7 @@ int main()
               "127.0.0.1",
               &server.sin_addr);
 
-    // Timeout setting
+    // Timeout settings
     timeout.tv_sec = 3;
     timeout.tv_usec = 0;
 
@@ -60,17 +65,6 @@ int main()
                SO_RCVTIMEO,
                (const char *)&timeout,
                sizeof(timeout));
-
-    // Connect to server
-    if (connect(sockfd,
-                (struct sockaddr *)&server,
-                sizeof(server)) < 0)
-    {
-        printf("Connection failed\n");
-        return 0;
-    }
-
-    printf("Connected to server\n");
 
     // Input details
     printf("Enter total number of frames: ");
@@ -81,108 +75,78 @@ int main()
 
     end = windowsize - 1;
 
-    // Send initial frames
-    for (frame = 0;
-         frame < totalframes && frame <= end;
-         frame++)
+    // Send frames
+    while (start < totalframes)
     {
-        sprintf(buffer, "%d", frame);
-
-        send(sockfd,
-             buffer,
-             sizeof(buffer),
-             0);
-
-        printf("Frame %d sent\n", frame);
-    }
-
-    // Continue communication
-    while (1)
-    {
-        // Send next frame
-        if (end - start != windowsize - 1 &&
-            resendflag == 0 &&
-            frame != totalframes)
+        // Send window frames
+        while (frame <= end &&
+               frame < totalframes)
         {
-            sprintf(buffer, "%d", frame);
+            sprintf(buffer,
+                    "%d",
+                    frame);
 
-            send(sockfd,
-                 buffer,
-                 sizeof(buffer),
-                 0);
+            sendto(sockfd,
+                   buffer,
+                   strlen(buffer) + 1,
+                   0,
+                   (struct sockaddr *)&server,
+                   serverlen);
 
-            printf("Frame %d sent\n", frame);
+            printf("Frame %d sent\n",
+                   frame);
 
-            end++;
             frame++;
         }
-
-        resendflag = 0;
 
         memset(buffer, 0, sizeof(buffer));
 
         // Receive ACK
-        readval = recv(sockfd,
-                       buffer,
-                       sizeof(buffer),
-                       0);
-
-        ack = atoi(buffer);
+        readval = recvfrom(sockfd,
+                           buffer,
+                           sizeof(buffer),
+                           0,
+                           NULL,
+                           NULL);
 
         // ACK received
         if (readval > 0)
         {
-            printf("Acknowledgement received: %d\n",
+            buffer[readval] = '\0';
+
+            ack = atoi(buffer);
+
+            printf("Acknowledgment received: %d\n",
                    ack);
 
-            if (ack + 1 == totalframes)
-            {
-                strcpy(buffer, "Exit");
+            start = ack + 1;
 
-                send(sockfd,
-                     buffer,
-                     sizeof(buffer),
-                     0);
-
-                printf("Exit\n");
-
-                break;
-            }
-
-            if (ack == start)
-            {
-                start++;
-            }
+            end = start + windowsize - 1;
         }
         else
         {
             // Timeout occurred
-            printf("Acknowledgement not received for %d\n",
+            printf("Timeout occurred\n");
+
+            printf("Resending frames from %d\n",
                    start);
 
-            printf("Resending frames\n");
-
-            // Resend window frames
-            for (i = start;
-                 i < totalframes &&
-                 i < start + windowsize;
-                 i++)
-            {
-                sprintf(buffer, "%d", i);
-
-                send(sockfd,
-                     buffer,
-                     sizeof(buffer),
-                     0);
-
-                printf("Frame %d sent\n", i);
-            }
-
-            resendflag = 1;
+            frame = start;
         }
     }
 
-    // Close socket
+    // Exit message
+    strcpy(buffer, "Exit");
+
+    sendto(sockfd,
+           buffer,
+           strlen(buffer) + 1,
+           0,
+           (struct sockaddr *)&server,
+           serverlen);
+
+    printf("All frames sent successfully\n");
+
     close(sockfd);
 
     return 0;
