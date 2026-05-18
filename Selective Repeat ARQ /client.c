@@ -3,62 +3,31 @@
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-
-void func(int sockfd)
-{
-    char buff[80];
-
-    int ack, k;
-
-    // Send initial frame number
-    snprintf(buff, sizeof(buff), "%d", 8);
-
-    write(sockfd, buff, sizeof(buff));
-
-    // Receive ACK for missing frame
-    read(sockfd, buff, sizeof(buff));
-
-    ack = atoi(buff);
-
-    printf("Frames Sending : ");
-
-    for(k = 0; k < 8; k++)
-    {
-        printf("%d ", k);
-    }
-
-    printf("\n");
-
-    printf("Frame %d not sent properly.\n", ack);
-
-    printf("Resending Frame : %d\n", ack);
-
-    // Resend lost frame
-    snprintf(buff, sizeof(buff), "%d", ack + 1);
-
-    write(sockfd, buff, sizeof(buff));
-
-    // Receive completion message
-    read(sockfd, buff, sizeof(buff));
-
-    if(strcmp("end", buff) == 0)
-    {
-        printf("All frames sent successfully\n");
-
-        printf("Exit\n");
-    }
-}
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 int main()
 {
     int sockfd;
 
-    struct sockaddr_in servaddr;
+    struct sockaddr_in server;
 
-    // Create socket
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    socklen_t serverlen = sizeof(server);
 
-    if(sockfd == -1)
+    char buffer[100];
+
+    int windowsize = 5;
+
+    int i;
+    int ack;
+    int readval;
+
+    // Create UDP socket
+    sockfd = socket(AF_INET,
+                    SOCK_DGRAM,
+                    0);
+
+    if (sockfd < 0)
     {
         printf("Socket creation failed\n");
         return 0;
@@ -66,23 +35,95 @@ int main()
 
     printf("Socket successfully created\n");
 
-    // Server details
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    servaddr.sin_port = htons(8080);
+    // Initialize structure
+    memset(&server, 0, sizeof(server));
 
-    // Connect to server
-    if(connect(sockfd,
-       (struct sockaddr *)&servaddr,
-       sizeof(servaddr)) != 0)
+    // Server details
+    server.sin_family = AF_INET;
+    server.sin_port = htons(8080);
+
+    inet_pton(AF_INET,
+              "127.0.0.1",
+              &server.sin_addr);
+
+    // Send frames
+    printf("Sending frames...\n");
+
+    for (i = 0; i < windowsize; i++)
     {
-        printf("Connection with receiver failed\n");
-        return 0;
+        sprintf(buffer,
+                "%d",
+                i);
+
+        sendto(sockfd,
+               buffer,
+               strlen(buffer) + 1,
+               0,
+               (struct sockaddr *)&server,
+               serverlen);
+
+        printf("Sent frame %d\n",
+               i);
+
+        // Receive ACK
+        readval = recvfrom(sockfd,
+                           buffer,
+                           sizeof(buffer),
+                           0,
+                           NULL,
+                           NULL);
+
+        if (readval > 0)
+        {
+            buffer[readval] = '\0';
+
+            ack = atoi(buffer);
+
+            printf("Received ACK for frame %d\n",
+                   ack);
+        }
+        else
+        {
+            printf("ACK not received\n");
+            break;
+        }
     }
 
-    printf("Connected to the receiver\n");
+    printf("\nResending frames from lost frame...\n");
 
-    func(sockfd);
+    // Retransmit remaining frames
+    for (; i < windowsize; i++)
+    {
+        sprintf(buffer,
+                "%d",
+                i);
+
+        sendto(sockfd,
+               buffer,
+               strlen(buffer) + 1,
+               0,
+               (struct sockaddr *)&server,
+               serverlen);
+
+        printf("Resent frame %d\n",
+               i);
+
+        readval = recvfrom(sockfd,
+                           buffer,
+                           sizeof(buffer),
+                           0,
+                           NULL,
+                           NULL);
+
+        buffer[readval] = '\0';
+
+        ack = atoi(buffer);
+
+        printf("Received ACK for frame %d\n",
+               ack);
+    }
+
+    printf("\nAll frames sent successfully\n");
 
     close(sockfd);
 
