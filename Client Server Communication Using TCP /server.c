@@ -9,18 +9,13 @@
 int main()
 {
     int sockfd, newsockfd, readval;
-
     struct sockaddr_in server, client;
-
     socklen_t clientlen = sizeof(client);
-
     char str[100], temp;
-
     int i, j, k;
 
     // Create TCP socket
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
     if (sockfd < 0)
     {
         printf("Socket creation failed\n");
@@ -36,9 +31,7 @@ int main()
     server.sin_addr.s_addr = INADDR_ANY;
 
     // Bind socket
-    if (bind(sockfd,
-             (struct sockaddr *)&server,
-             sizeof(server)) < 0)
+    if (bind(sockfd, (struct sockaddr *)&server,sizeof(server)) < 0)
     {
         printf("Binding failed\n");
         return 0;
@@ -56,10 +49,7 @@ int main()
     printf("Listening...\n");
 
     // Accept client connection
-    newsockfd = accept(sockfd,
-                       (struct sockaddr *)&client,
-                       &clientlen);
-
+    newsockfd = accept(sockfd, (struct sockaddr *)&client, &clientlen);
     if (newsockfd < 0)
     {
         printf("Accept failed\n");
@@ -69,9 +59,7 @@ int main()
     printf("New socket created\n");
 
     // Receive string
-    readval = read(newsockfd,
-                   str,
-                   sizeof(str));
+    readval = read(newsockfd,str,sizeof(str));
 
     str[readval] = '\0';
 
@@ -89,10 +77,7 @@ int main()
     }
 
     // Send reversed string
-    send(newsockfd,
-         str,
-         strlen(str) + 1,
-         0);
+    send(newsockfd,str,strlen(str) + 1,0);
 
     // Close sockets
     close(newsockfd);
