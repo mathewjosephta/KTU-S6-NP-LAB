@@ -8,38 +8,38 @@
 
 int main()
 {
-    int clientsock;
+    int sockfd;
     int n;
 
-    struct sockaddr_in serveraddr;
+    struct sockaddr_in server;
 
     char filename[100];
     char filedata[300];
 
     // Create TCP socket
-    clientsock = socket(AF_INET, SOCK_STREAM, 0);
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
-    if (clientsock < 0)
+    if (sockfd < 0)
     {
         printf("Socket creation failed\n");
         return 0;
     }
 
     // Initialize structure
-    memset(&serveraddr, 0, sizeof(serveraddr));
+    memset(&server, 0, sizeof(server));
 
     // Server details
-    serveraddr.sin_family = AF_INET;
-    serveraddr.sin_port = htons(8086);
+    server.sin_family = AF_INET;
+    server.sin_port = htons(8086);
 
     inet_pton(AF_INET,
               "127.0.0.1",
-              &serveraddr.sin_addr);
+              &server.sin_addr);
 
     // Connect to server
-    if (connect(clientsock,
-                (struct sockaddr *)&serveraddr,
-                sizeof(serveraddr)) < 0)
+    if (connect(sockfd,
+                (struct sockaddr *)&server,
+                sizeof(server)) < 0)
     {
         printf("Connection failed\n");
         return 0;
@@ -52,12 +52,12 @@ int main()
     scanf("%s", filename);
 
     // Send filename
-    write(clientsock,
+    write(sockfd,
           filename,
           strlen(filename) + 1);
 
     // Receive file contents
-    n = read(clientsock,
+    n = read(sockfd,
              filedata,
              sizeof(filedata));
 
@@ -72,7 +72,7 @@ int main()
     printf("%s\n", filedata);
 
     // Close socket
-    close(clientsock);
+    close(sockfd);
 
     return 0;
 }
