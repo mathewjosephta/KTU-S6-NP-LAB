@@ -1,5 +1,3 @@
-// STOP AND WAIT - CLIENT SIDE
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,16 +9,13 @@
 int main()
 {
     int sockfd;
+    int frame = 0;
+    int totalframes;
+    int ack, readval;
 
     struct sockaddr_in server;
 
     char buffer[100];
-
-    int frame = 0;
-    int totalframes;
-
-    int ack;
-    int readval;
 
     // Create TCP socket
     sockfd = socket(AF_INET,
@@ -33,7 +28,10 @@ int main()
         return 0;
     }
 
-    printf("Socket successfully created\n");
+    printf("Socket created successfully\n");
+
+    // Initialize structure
+    memset(&server, 0, sizeof(server));
 
     // Server details
     server.sin_family = AF_INET;
@@ -58,22 +56,20 @@ int main()
     printf("Enter total number of frames: ");
     scanf("%d", &totalframes);
 
-    // Send frames one by one
+    // Send frames
     while (frame < totalframes)
     {
-        // Convert frame number to string
         sprintf(buffer, "%d", frame);
 
         // Send frame
         send(sockfd,
              buffer,
-             sizeof(buffer),
+             strlen(buffer) + 1,
              0);
 
-        printf("Client: Sent frame %d\n",
+        printf("Sent frame %d\n",
                frame);
 
-        // Clear buffer
         memset(buffer, 0, sizeof(buffer));
 
         // Receive acknowledgment
@@ -83,9 +79,11 @@ int main()
 
         if (readval > 0)
         {
+            buffer[readval] = '\0';
+
             ack = atoi(buffer);
 
-            printf("Client: Received acknowledgment for frame %d\n",
+            printf("Received acknowledgment for frame %d\n",
                    ack);
 
             frame++;
@@ -98,7 +96,6 @@ int main()
 
     printf("All frames sent successfully\n");
 
-    // Close socket
     close(sockfd);
 
     return 0;
