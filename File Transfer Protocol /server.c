@@ -11,17 +11,13 @@ int main()
 {
     int sockfd, newsockfd;
     int n, f;
-
     struct sockaddr_in server, client;
-
     socklen_t clientlen = sizeof(client);
-
     char filename[100];
     char filedata[300];
 
     // Create TCP socket
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
     if (sockfd < 0)
     {
         printf("Socket creation failed\n");
@@ -39,9 +35,7 @@ int main()
     server.sin_addr.s_addr = INADDR_ANY;
 
     // Bind socket
-    if (bind(sockfd,
-             (struct sockaddr *)&server,
-             sizeof(server)) < 0)
+    if (bind(sockfd,(struct sockaddr *)&server,sizeof(server)) < 0)
     {
         printf("Bind failed\n");
         return 0;
@@ -59,10 +53,7 @@ int main()
     printf("Listening...\n");
 
     // Accept client connection
-    newsockfd = accept(sockfd,
-                       (struct sockaddr *)&client,
-                       &clientlen);
-
+    newsockfd = accept(sockfd,(struct sockaddr *)&client,&clientlen);
     if (newsockfd < 0)
     {
         printf("Accept failed\n");
@@ -72,9 +63,7 @@ int main()
     printf("Connection successful\n");
 
     // Receive filename
-    n = read(newsockfd,
-             filename,
-             sizeof(filename));
+    n = read(newsockfd,filename,sizeof(filename));
 
     if (n > 0 && n < sizeof(filename))
     {
@@ -85,22 +74,16 @@ int main()
 
     // Open file
     f = open(filename, O_RDONLY);
-
     if (f < 0)
     {
-        strcpy(filedata,
-               "File not found on server");
+        strcpy(filedata, "File not found on server");
 
-        write(newsockfd,
-              filedata,
-              strlen(filedata) + 1);
+        write(newsockfd,filedata,strlen(filedata) + 1);
     }
     else
     {
         // Read file contents
-        n = read(f,
-                 filedata,
-                 sizeof(filedata));
+        n = read(f,filedata,sizeof(filedata));
 
         if (n >= 0 && n < sizeof(filedata))
         {
