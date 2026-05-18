@@ -1,24 +1,25 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+#include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
 #include <fcntl.h>
-#include <string.h>
-#include <stdlib.h>
 
 int main()
 {
-    struct sockaddr_in clientaddr, serveraddr;
-
-    int serversock, newserversock;
-    int clientsize;
+    int serversock, newsock;
     int n, f;
+
+    struct sockaddr_in serveraddr, clientaddr;
+
+    socklen_t clientsize = sizeof(clientaddr);
 
     char filename[100];
     char filedata[300];
 
-    // Create socket
+    // Create TCP socket
     serversock = socket(AF_INET, SOCK_STREAM, 0);
 
     if (serversock < 0)
@@ -29,18 +30,18 @@ int main()
 
     printf("Server socket created\n");
 
-    // Clear structure
-    bzero((char *)&serveraddr, sizeof(serveraddr));
+    // Initialize structure
+    memset(&serveraddr, 0, sizeof(serveraddr));
 
     // Server details
     serveraddr.sin_family = AF_INET;
     serveraddr.sin_port = htons(8086);
-    serveraddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    serveraddr.sin_addr.s_addr = INADDR_ANY;
 
     // Bind socket
     if (bind(serversock,
-        (struct sockaddr *)&serveraddr,
-        sizeof(serveraddr)) < 0)
+             (struct sockaddr *)&serveraddr,
+             sizeof(serveraddr)) < 0)
     {
         printf("Bind failed\n");
         return 0;
@@ -55,64 +56,68 @@ int main()
         return 0;
     }
 
-    printf("Listen successful\n");
+    printf("Listening...\n");
 
-    // Accept connection
-    clientsize = sizeof(clientaddr);
+    // Accept client connection
+    newsock = accept(serversock,
+                     (struct sockaddr *)&clientaddr,
+                     &clientsize);
 
-    newserversock = accept(serversock,
-        (struct sockaddr *)&clientaddr,
-        &clientsize);
-
-    if (newserversock < 0)
+    if (newsock < 0)
     {
-        printf("Connection failed\n");
+        printf("Accept failed\n");
         return 0;
     }
 
     printf("Connection successful\n");
 
     // Receive filename
-    n = read(newserversock,
-        filename,
-        sizeof(filename));
+    n = read(newsock,
+             filename,
+             sizeof(filename));
 
     filename[n] = '\0';
 
-    printf("\nThe requested file from client is %s\n",
-           filename);
+    printf("\nRequested file: %s\n", filename);
 
     // Open file
-    f = open(filename, O_RDWR);
+    f = open(filename, O_RDONLY);
 
     if (f < 0)
     {
-        strcpy(filedata, "File not found on server");
+        strcpy(filedata,
+               "File not found on server");
 
-        write(newserversock,
+        write(newsock,
               filedata,
-              strlen(filedata));
+              strlen(filedata) + 1);
     }
     else
     {
         // Read file contents
-        n = read(f, filedata, sizeof(filedata));
+        n = read(f,
+                 filedata,
+                 sizeof(filedata));
 
-        filedata[n] = '\0';
+        if (n >= 0 && n < sizeof(filedata))
+        {
+            filedata[n] = '\0';
+        }
 
-        printf("\nThe contents of the file:\n");
+        printf("\nFile contents:\n");
 
         printf("%s\n", filedata);
 
         // Send file contents
-        write(newserversock,
+        write(newsock,
               filedata,
-              strlen(filedata));
+              strlen(filedata) + 1);
 
         close(f);
     }
 
-    close(newserversock);
+    // Close sockets
+    close(newsock);
     close(serversock);
 
     return 0;
