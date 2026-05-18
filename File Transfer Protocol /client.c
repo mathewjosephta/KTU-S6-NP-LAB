@@ -10,15 +10,12 @@ int main()
 {
     int sockfd;
     int n;
-
     struct sockaddr_in server;
-
     char filename[100];
     char filedata[300];
 
     // Create TCP socket
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
     if (sockfd < 0)
     {
         printf("Socket creation failed\n");
@@ -31,15 +28,10 @@ int main()
     // Server details
     server.sin_family = AF_INET;
     server.sin_port = htons(8086);
-
-    inet_pton(AF_INET,
-              "127.0.0.1",
-              &server.sin_addr);
+    inet_pton(AF_INET,"127.0.0.1",&server.sin_addr);
 
     // Connect to server
-    if (connect(sockfd,
-                (struct sockaddr *)&server,
-                sizeof(server)) < 0)
+    if (connect(sockfd,(struct sockaddr *)&server,sizeof(server)) < 0)
     {
         printf("Connection failed\n");
         return 0;
@@ -52,14 +44,10 @@ int main()
     scanf("%s", filename);
 
     // Send filename
-    write(sockfd,
-          filename,
-          strlen(filename) + 1);
+    write(sockfd,filename,strlen(filename) + 1);
 
     // Receive file contents
-    n = read(sockfd,
-             filedata,
-             sizeof(filedata));
+    n = read(sockfd,filedata,sizeof(filedata));
 
     if (n >= 0 && n < sizeof(filedata))
     {
@@ -68,7 +56,6 @@ int main()
 
     // Display file contents
     printf("\nFile contents:\n");
-
     printf("%s\n", filedata);
 
     // Close socket
