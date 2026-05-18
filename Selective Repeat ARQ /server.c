@@ -5,26 +5,29 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <time.h>
 
 int main()
 {
-    int sockfd, newsockfd;
+    int sockfd;
 
     struct sockaddr_in server, client;
 
-    int clientlen = sizeof(client);
+    socklen_t clientlen = sizeof(client);
 
     char buffer[100];
 
     int frame;
     int lostframe;
-    int windowsize = 8;
+
+    int windowsize = 5;
 
     int i;
+    int readval;
 
-    // Create TCP socket
+    // Create UDP socket
     sockfd = socket(AF_INET,
-                    SOCK_STREAM,
+                    SOCK_DGRAM,
                     0);
 
     if (sockfd < 0)
@@ -34,6 +37,9 @@ int main()
     }
 
     printf("Socket successfully created\n");
+
+    // Initialize structure
+    memset(&server, 0, sizeof(server));
 
     // Server details
     server.sin_family = AF_INET;
@@ -49,92 +55,93 @@ int main()
         return 0;
     }
 
-    printf("Socket successfully binded\n");
+    printf("Binding successful\n");
 
-    // Listen for client
-    listen(sockfd, 5);
+    printf("Waiting for frames...\n");
 
-    printf("Server listening\n");
+    srand(time(0));
 
-    // Accept client
-    newsockfd = accept(sockfd,
-                       (struct sockaddr *)&client,
-                       (socklen_t *)&clientlen);
+    // Random lost frame
+    lostframe = rand() % windowsize;
 
-    if (newsockfd < 0)
-    {
-        printf("Accept failed\n");
-        return 0;
-    }
-
-    printf("Server accepted the client\n");
-
-    // Receive total frames
-    read(newsockfd,
-         buffer,
-         sizeof(buffer));
-
-    frame = atoi(buffer);
-
-    // Display frames
-    printf("Receiving Frames : ");
-
-    for (i = 0; i < frame; i++)
-    {
-        printf("%d ", i);
-    }
-
-    printf("\n");
-
-    // Random frame loss
-    lostframe = rand() % (windowsize - 1);
-
-    // Receive frames except lost frame
     for (i = 0; i < windowsize; i++)
     {
-        if (i != lostframe)
-        {
-            sleep(1);
+        memset(buffer, 0, sizeof(buffer));
 
-            printf("Received Frame : %d\n",
-                   i);
+        // Receive frame
+        readval = recvfrom(sockfd,
+                           buffer,
+                           sizeof(buffer),
+                           0,
+                           (struct sockaddr *)&client,
+                           &clientlen);
+
+        buffer[readval] = '\0';
+
+        frame = atoi(buffer);
+
+        // Simulate frame loss
+        if (frame == lostframe)
+        {
+            printf("Frame %d lost\n",
+                   frame);
+
+            continue;
         }
+
+        printf("Received frame %d\n",
+               frame);
+
+        // Send ACK
+        sprintf(buffer,
+                "%d",
+                frame);
+
+        sendto(sockfd,
+               buffer,
+               strlen(buffer) + 1,
+               0,
+               (struct sockaddr *)&client,
+               clientlen);
+
+        printf("Acknowledgment sent for frame %d\n",
+               frame);
     }
 
-    printf("Frame %d not received\n",
-           lostframe);
+    printf("\nWaiting for retransmitted frames...\n");
 
-    printf("Waiting for Frame %d\n",
-           lostframe);
+    // Receive retransmitted frames
+    for (i = lostframe; i < windowsize; i++)
+    {
+        memset(buffer, 0, sizeof(buffer));
 
-    // Send ACK for missing frame
-    sprintf(buffer,
-            "%d",
-            lostframe);
+        readval = recvfrom(sockfd,
+                           buffer,
+                           sizeof(buffer),
+                           0,
+                           (struct sockaddr *)&client,
+                           &clientlen);
 
-    write(newsockfd,
-          buffer,
-          sizeof(buffer));
+        buffer[readval] = '\0';
 
-    // Receive retransmitted frame
-    read(newsockfd,
-         buffer,
-         sizeof(buffer));
+        frame = atoi(buffer);
 
-    frame = atoi(buffer);
+        printf("Received retransmitted frame %d\n",
+               frame);
 
-    printf("Received Frame : %d\n",
-           frame - 1);
+        // Send ACK
+        sprintf(buffer,
+                "%d",
+                frame);
 
-    // Send completion message
-    strcpy(buffer, "end");
+        sendto(sockfd,
+               buffer,
+               strlen(buffer) + 1,
+               0,
+               (struct sockaddr *)&client,
+               clientlen);
+    }
 
-    write(newsockfd,
-          buffer,
-          sizeof(buffer));
-
-    // Close sockets
-    close(newsockfd);
     close(sockfd);
 
     return 0;
