@@ -1,5 +1,3 @@
-// STOP AND WAIT - SERVER SIDE
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,15 +9,13 @@
 int main()
 {
     int sockfd, newsockfd;
+    int frame, readval;
 
     struct sockaddr_in server, client;
 
-    int clientlen = sizeof(client);
+    socklen_t clientlen = sizeof(client);
 
     char buffer[100];
-
-    int frame;
-    int readval;
 
     // Create TCP socket
     sockfd = socket(AF_INET,
@@ -31,6 +27,9 @@ int main()
         printf("Socket creation failed\n");
         return 0;
     }
+
+    // Initialize structure
+    memset(&server, 0, sizeof(server));
 
     // Server details
     server.sin_family = AF_INET;
@@ -53,12 +52,12 @@ int main()
         return 0;
     }
 
-    printf("Server is listening on port 8080\n");
+    printf("Server listening on port 8080\n");
 
-    // Accept client connection
+    // Accept connection
     newsockfd = accept(sockfd,
                        (struct sockaddr *)&client,
-                       (socklen_t *)&clientlen);
+                       &clientlen);
 
     if (newsockfd < 0)
     {
@@ -66,30 +65,28 @@ int main()
         return 0;
     }
 
-    printf("Connection established with client\n");
+    printf("Connection established\n");
 
-    // Receive frames continuously
+    // Receive frames
     while (1)
     {
-        // Clear buffer
         memset(buffer, 0, sizeof(buffer));
 
-        // Read frame
         readval = read(newsockfd,
                        buffer,
                        sizeof(buffer));
 
-        // Client disconnected
         if (readval <= 0)
         {
-            printf("Connection closed by client\n");
+            printf("Connection closed\n");
             break;
         }
 
-        // Convert string to integer
+        buffer[readval] = '\0';
+
         sscanf(buffer, "%d", &frame);
 
-        printf("Server: Received frame %d\n",
+        printf("Received frame %d\n",
                frame);
 
         // Send acknowledgment
@@ -97,14 +94,13 @@ int main()
 
         send(newsockfd,
              buffer,
-             sizeof(buffer),
+             strlen(buffer) + 1,
              0);
 
-        printf("Server: Sent acknowledgment for frame %d\n",
+        printf("Acknowledgment sent for frame %d\n",
                frame);
     }
 
-    // Close sockets
     close(newsockfd);
     close(sockfd);
 
