@@ -12,7 +12,7 @@ int main()
 
     struct sockaddr_in server, client;
 
-    socklen_t len = sizeof(client);
+    socklen_t clientlen = sizeof(client);
 
     char str[100];
     char result[100];
@@ -27,6 +27,9 @@ int main()
         printf("Socket creation failed\n");
         return 0;
     }
+
+    // Initialize server structure
+    memset(&server, 0, sizeof(server));
 
     // Server details
     server.sin_family = AF_INET;
@@ -50,13 +53,14 @@ int main()
              sizeof(str),
              0,
              (struct sockaddr *)&client,
-             &len);
+             &clientlen);
 
     printf("Received string: %s\n", str);
 
-    // Palindrome checking
+    // Find string length
     j = strlen(str) - 1;
 
+    // Check palindrome
     for (i = 0; i < j; i++, j--)
     {
         if (str[i] != str[j])
@@ -76,13 +80,13 @@ int main()
         strcpy(result, "Not Palindrome");
     }
 
-    // Send result to client
+    // Send result
     sendto(sockfd,
            result,
            strlen(result) + 1,
            0,
            (struct sockaddr *)&client,
-           len);
+           clientlen);
 
     // Close socket
     close(sockfd);
