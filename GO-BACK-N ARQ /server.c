@@ -5,26 +5,28 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <time.h>
 
 int main()
 {
-    int sockfd, newsockfd;
+    int sockfd;
 
     struct sockaddr_in server, client;
 
-    int clientlen = sizeof(client);
+    socklen_t clientlen = sizeof(client);
 
     char buffer[100];
 
     int frame;
-    int ack;
-    int nextframe = 0;
+    int ack = -1;
+    int expectedframe = 0;
 
     int randomvalue;
+    int readval;
 
-    // Create TCP socket
+    // Create UDP socket
     sockfd = socket(AF_INET,
-                    SOCK_STREAM,
+                    SOCK_DGRAM,
                     0);
 
     if (sockfd < 0)
@@ -34,6 +36,9 @@ int main()
     }
 
     printf("Socket successfully created\n");
+
+    // Initialize structure
+    memset(&server, 0, sizeof(server));
 
     // Server details
     server.sin_family = AF_INET;
@@ -49,37 +54,25 @@ int main()
         return 0;
     }
 
-    printf("Socket successfully binded\n");
+    printf("Binding successful\n");
 
-    // Listen for client
-    listen(sockfd, 5);
+    printf("Waiting for frames...\n");
 
-    printf("Server listening\n");
+    srand(time(0));
 
-    // Accept client
-    newsockfd = accept(sockfd,
-                       (struct sockaddr *)&client,
-                       (socklen_t *)&clientlen);
-
-    if (newsockfd < 0)
-    {
-        printf("Accept failed\n");
-        return 0;
-    }
-
-    printf("Server accepted the client\n");
-
-    // Receive frames continuously
     while (1)
     {
-        sleep(1);
-
         memset(buffer, 0, sizeof(buffer));
 
-        recv(newsockfd,
-             buffer,
-             sizeof(buffer),
-             0);
+        // Receive frame
+        readval = recvfrom(sockfd,
+                           buffer,
+                           sizeof(buffer),
+                           0,
+                           (struct sockaddr *)&client,
+                           &clientlen);
+
+        buffer[readval] = '\0';
 
         // Exit condition
         if (strcmp(buffer, "Exit") == 0)
@@ -90,62 +83,49 @@ int main()
 
         frame = atoi(buffer);
 
-        // Discard out-of-order frames
-        if (frame != nextframe)
+        // Simulate frame loss
+        randomvalue = rand() % 3;
+
+        if (randomvalue == 0)
         {
-            printf("Frame %d discarded\n",
+            printf("Frame %d lost\n",
                    frame);
-
-            printf("Acknowledgement sent: %d\n",
-                   ack);
-
-            sprintf(buffer, "%d", ack);
-
-            send(newsockfd,
-                 buffer,
-                 sizeof(buffer),
-                 0);
 
             continue;
         }
 
-        // Random frame loss simulation
-        randomvalue = rand() % 3;
-
-        switch (randomvalue)
+        // Correct frame
+        if (frame == expectedframe)
         {
-            case 0:
+            printf("Frame %d received\n",
+                   frame);
 
-                // Frame lost
-                break;
+            ack = frame;
 
-            case 1:
-
-            case 2:
-
-                ack = frame;
-
-                printf("Frame %d received\n",
-                       frame);
-
-                printf("Acknowledgement sent: %d\n",
-                       ack);
-
-                sprintf(buffer, "%d", ack);
-
-                send(newsockfd,
-                     buffer,
-                     sizeof(buffer),
-                     0);
-
-                nextframe = ack + 1;
-
-                break;
+            expectedframe++;
         }
+        else
+        {
+            printf("Frame %d discarded\n",
+                   frame);
+        }
+
+        // Send cumulative ACK
+        sprintf(buffer,
+                "%d",
+                ack);
+
+        sendto(sockfd,
+               buffer,
+               strlen(buffer) + 1,
+               0,
+               (struct sockaddr *)&client,
+               clientlen);
+
+        printf("Acknowledgment sent: %d\n",
+               ack);
     }
 
-    // Close sockets
-    close(newsockfd);
     close(sockfd);
 
     return 0;
