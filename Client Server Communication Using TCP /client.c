@@ -8,8 +8,7 @@
 
 int main()
 {
-    int sockfd;
-    int readval;
+    int sockfd,readval;
     struct sockaddr_in server;
     char str[100];
 
@@ -21,31 +20,35 @@ int main()
         return 0;
     }
 
+    // Initialize server structure
+    memset(&server, 0, sizeof(server));
+
     // Server details
     server.sin_family = AF_INET;
     server.sin_port = htons(8086);
-
-    inet_pton(AF_INET, "127.0.0.1",&server.sin_addr);
+    inet_pton(AF_INET,"127.0.0.1",&server.sin_addr);
 
     // Connect to server
     if (connect(sockfd,(struct sockaddr *)&server,sizeof(server)) < 0)
     {
-        printf("Error in connection\n");
+        printf("Connection failed\n");
         return 0;
     }
 
     // Input string
-    printf("Enter the string: ");
+    printf("Enter string: ");
     scanf("%s", str);
 
     // Send string to server
-    send(sockfd, str, sizeof(str), 0);
+    send(sockfd,str,strlen(str) + 1,0);
 
     // Receive reversed string
-    readval = read(sockfd, str, sizeof(str));
+    readval = read(sockfd,str,sizeof(str));
 
-    // Display output
-    printf("Reversed string from server: %s\n", str);
+    str[readval] = '\0';
+
+    // Display result
+    printf("Server says: %s\n", str);
 
     // Close socket
     close(sockfd);
