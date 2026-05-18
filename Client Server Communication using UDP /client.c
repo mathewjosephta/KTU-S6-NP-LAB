@@ -9,50 +9,37 @@
 int main()
 {
     int sockfd;
-
     struct sockaddr_in server;
-
     socklen_t len = sizeof(server);
-
     char str[100];
     char result[100];
 
     // Create UDP socket
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-
     if (sockfd < 0)
     {
         printf("Socket creation failed\n");
         return 0;
     }
 
+    // Initialize server structure
+    memset(&server, 0, sizeof(server));
+
     // Server details
     server.sin_family = AF_INET;
     server.sin_port = htons(8090);
 
-    inet_pton(AF_INET,
-              "127.0.0.1",
-              &server.sin_addr);
+    inet_pton(AF_INET,"127.0.0.1",&server.sin_addr);
 
     // Input string
     printf("Enter string: ");
     scanf("%s", str);
 
     // Send string to server
-    sendto(sockfd,
-           str,
-           strlen(str) + 1,
-           0,
-           (struct sockaddr *)&server,
-           len);
+    sendto(sockfd,str,strlen(str) + 1,0,(struct sockaddr *)&server,len);
 
     // Receive result from server
-    recvfrom(sockfd,
-             result,
-             sizeof(result),
-             0,
-             (struct sockaddr *)&server,
-             &len);
+    recvfrom(sockfd,result,sizeof(result),0,(struct sockaddr *)&server,&len);
 
     // Display result
     printf("Server says: %s\n", result);
