@@ -1,65 +1,56 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<unistd.h>
+#include<arpa/inet.h>
+#include<sys/socket.h>
+#include<netinet/in.h>
 
 int main()
 {
-    int sockfd;
-    int n;
-    struct sockaddr_in server;
-    char filename[100];
-    char filedata[300];
+int sockfd,readval;
+struct sockaddr_in server;
+char filename[100];
+char filedata[300];
 
-    // Create TCP socket
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0)
-    {
-        printf("Socket creation failed\n");
-        return 0;
-    }
+sockfd=socket(AF_INET,SOCK_STREAM,0);
 
-    // Initialize structure
-    memset(&server, 0, sizeof(server));
+if(sockfd<0)
+{
+printf("Socket creation failed\n");
+return 0;
+}
 
-    // Server details
-    server.sin_family = AF_INET;
-    server.sin_port = htons(8086);
-    inet_pton(AF_INET,"127.0.0.1",&server.sin_addr);
+memset(&server,0,sizeof(server));
 
-    // Connect to server
-    if (connect(sockfd,(struct sockaddr *)&server,sizeof(server)) < 0)
-    {
-        printf("Connection failed\n");
-        return 0;
-    }
+server.sin_family=AF_INET;
+server.sin_port=htons(8086);
+inet_pton(AF_INET,"127.0.0.1",&server.sin_addr);
 
-    printf("Socket connected successfully\n");
+if(connect(sockfd,(struct sockaddr *)&server,sizeof(server))<0)
+{
+printf("Connection failed\n");
+return 0;
+}
 
-    // Enter filename
-    printf("Enter filename: ");
-    scanf("%s", filename);
+printf("Connected\n");
 
-    // Send filename
-    write(sockfd,filename,strlen(filename) + 1);
+printf("Enter filename: ");
 
-    // Receive file contents
-    n = read(sockfd,filedata,sizeof(filedata));
+scanf("%s",filename);
 
-    if (n >= 0 && n < sizeof(filedata))
-    {
-        filedata[n] = '\0';
-    }
+send(sockfd,filename,strlen(filename)+1,0);
 
-    // Display file contents
-    printf("\nFile contents:\n");
-    printf("%s\n", filedata);
+readval=read(sockfd,filedata,sizeof(filedata));
 
-    // Close socket
-    close(sockfd);
+if(readval>0)
+{
+filedata[readval]='\0';
+}
 
-    return 0;
+printf("File contents:\n%s\n",filedata);
+
+close(sockfd);
+
+return 0;
 }
