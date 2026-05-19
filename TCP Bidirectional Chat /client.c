@@ -9,13 +9,10 @@
 int main()
 {
     int sockfd, readval;
-
     struct sockaddr_in server;
-
     char str[100];
 
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
     if(sockfd < 0)
     {
         printf("Socket creation failed\n");
@@ -26,14 +23,9 @@ int main()
 
     server.sin_family = AF_INET;
     server.sin_port = htons(8080);
+    inet_pton(AF_INET,"127.0.0.1",&server.sin_addr);
 
-    inet_pton(AF_INET,
-              "127.0.0.1",
-              &server.sin_addr);
-
-    if(connect(sockfd,
-               (struct sockaddr *)&server,
-               sizeof(server)) < 0)
+    if(connect(sockfd,(struct sockaddr *)&server,sizeof(server)) < 0)
     {
         printf("Connection failed\n");
         return 0;
@@ -44,16 +36,10 @@ int main()
     while(1)
     {
         printf("Client: ");
-
         fgets(str, sizeof(str), stdin);
-
         str[strcspn(str, "\n")] = '\0';
 
-        send(sockfd,
-             str,
-             strlen(str) + 1,
-             0);
-
+        send(sockfd,str,strlen(str) + 1,0);
         if(strcmp(str, "exit") == 0)
         {
             break;
@@ -61,9 +47,7 @@ int main()
 
         memset(str, 0, sizeof(str));
 
-        readval = read(sockfd,
-                       str,
-                       sizeof(str));
+        readval = read(sockfd,str,sizeof(str));
 
         if(readval <= 0)
         {
