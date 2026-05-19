@@ -9,12 +9,12 @@
 
 int main()
 {
-    int sockfd, newsockfd;
-    int n, f;
+    int sockfd, newsockfd,readval;
     struct sockaddr_in server, client;
     socklen_t clientlen = sizeof(client);
     char filename[100];
     char filedata[300];
+    int f;
 
     // Create TCP socket
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -23,7 +23,6 @@ int main()
         printf("Socket creation failed\n");
         return 0;
     }
-
     printf("Server socket created\n");
 
     // Initialize structure
@@ -54,6 +53,7 @@ int main()
 
     // Accept client connection
     newsockfd = accept(sockfd,(struct sockaddr *)&client,&clientlen);
+
     if (newsockfd < 0)
     {
         printf("Accept failed\n");
@@ -63,31 +63,31 @@ int main()
     printf("Connection successful\n");
 
     // Receive filename
-    n = read(newsockfd,filename,sizeof(filename));
+    readval = read(newsockfd,filename,sizeof(filename));
 
-    if (n > 0 && n < sizeof(filename))
+    if (readval > 0 && readval < sizeof(filename))
     {
-        filename[n] = '\0';
+        filename[readval] = '\0';
     }
 
-    printf("\nRequested file: %s\n", filename);
+    printf("\nRequested file: %s\n",filename);
 
     // Open file
     f = open(filename, O_RDONLY);
+
     if (f < 0)
     {
-        strcpy(filedata, "File not found on server");
-
-        write(newsockfd,filedata,strlen(filedata) + 1);
+        strcpy(filedata,"File not found on server");
+        send(newsockfd,filedata,strlen(filedata) + 1,0);
     }
     else
     {
         // Read file contents
-        n = read(f,filedata,sizeof(filedata));
+        readval = read(f,filedata,sizeof(filedata));
 
-        if (n >= 0 && n < sizeof(filedata))
+        if (readval >= 0 &&readval < sizeof(filedata))
         {
-            filedata[n] = '\0';
+            filedata[readval] = '\0';
         }
 
         printf("\nFile contents:\n");
@@ -95,9 +95,7 @@ int main()
         printf("%s\n", filedata);
 
         // Send file contents
-        write(newsockfd,
-              filedata,
-              n);
+        send(newsockfd,filedata,readval, 0);
 
         close(f);
     }
