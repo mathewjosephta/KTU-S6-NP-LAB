@@ -2,12 +2,7 @@
 
 int main()
 {
-    int in;
-    int out;
-    int size;
-    int n;
-
-    int store = 0;
+    int n,in,out,size,store=0; 
 
     // Input bucket size
     printf("Enter bucket size: ");
@@ -32,20 +27,14 @@ int main()
         if(in <= (size - store))
         {
             store = store + in;
-
-            printf("Bucket buffer size %d out of %d\n",
-                   store, size);
+            printf("Bucket buffer size %d out of %d\n",store, size);
         }
         else
         {
             // Drop extra packets
-            printf("Dropped %d number of packets\n",
-                   in - (size - store));
-
+            printf("Dropped %d number of packets\n",in - (size - store));
             store = size;
-
-            printf("Bucket buffer size %d out of %d\n",
-                   store, size);
+            printf("Bucket buffer size %d out of %d\n",store, size);
         }
 
         // Remove outgoing packets
@@ -58,9 +47,7 @@ int main()
         }
 
         // Display remaining packets
-        printf("After outgoing %d packets left out of %d in buffer\n",
-               store, size);
-
+        printf("After outgoing %d packets left out of %d in buffer\n",store, size);
         n--;
     }
 
