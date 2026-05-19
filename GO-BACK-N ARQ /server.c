@@ -9,35 +9,21 @@
 
 int main()
 {
-    int sockfd;
-
+    int sockfd, newsockfd, readval;
     struct sockaddr_in server, client;
-
     socklen_t clientlen = sizeof(client);
+    char str[100];
+    int frame, randomvalue, ack = -1, expectedframe = 0;
 
-    char buffer[100];
-
-    int frame;
-    int ack = -1;
-    int expectedframe = 0;
-
-    int randomvalue;
-    int readval;
-
-    // Create UDP socket
-    sockfd = socket(AF_INET,
-                    SOCK_DGRAM,
-                    0);
-
+    // Create TCP socket
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0)
     {
         printf("Socket creation failed\n");
         return 0;
     }
 
-    printf("Socket successfully created\n");
-
-    // Initialize structure
+    // Initialize server structure
     memset(&server, 0, sizeof(server));
 
     // Server details
@@ -46,9 +32,7 @@ int main()
     server.sin_addr.s_addr = INADDR_ANY;
 
     // Bind socket
-    if (bind(sockfd,
-             (struct sockaddr *)&server,
-             sizeof(server)) < 0)
+    if (bind(sockfd,(struct sockaddr *)&server,sizeof(server)) < 0)
     {
         printf("Binding failed\n");
         return 0;
@@ -56,76 +40,83 @@ int main()
 
     printf("Binding successful\n");
 
-    printf("Waiting for frames...\n");
+    // Listen for client
+    if (listen(sockfd, 3) < 0)
+    {
+        printf("Listening failed\n");
+        return 0;
+    }
+
+    printf("Waiting for connection...\n");
+
+    // Accept client
+    newsockfd = accept(sockfd,(struct sockaddr *)&client,&clientlen);
+    if (newsockfd < 0)
+    {
+        printf("Accept failed\n");
+        return 0;
+    }
+
+    printf("Connection established\n");
 
     srand(time(0));
 
+    // Receive frames
     while (1)
     {
-        memset(buffer, 0, sizeof(buffer));
+        memset(str, 0, sizeof(str));
 
         // Receive frame
-        readval = recvfrom(sockfd,
-                           buffer,
-                           sizeof(buffer),
-                           0,
-                           (struct sockaddr *)&client,
-                           &clientlen);
-
-        buffer[readval] = '\0';
+        readval = read(newsockfd,str,izeof(str));
+        if (readval <= 0)
+        {
+            printf("Connection closed\n");
+            break;
+        }
+        str[readval] = '\0';
 
         // Exit condition
-        if (strcmp(buffer, "Exit") == 0)
+        if (strcmp(str, "Exit") == 0)
         {
             printf("Exit\n");
             break;
         }
 
-        frame = atoi(buffer);
+        // Convert string to integer
+        frame = atoi(str);
 
         // Simulate frame loss
         randomvalue = rand() % 3;
 
         if (randomvalue == 0)
         {
-            printf("Frame %d lost\n",
-                   frame);
-
+            printf("Frame %d lost\n", frame);
             continue;
         }
 
-        // Correct frame
+        // Check expected frame
         if (frame == expectedframe)
         {
-            printf("Frame %d received\n",
-                   frame);
-
+            printf("Frame %d received\n", frame);
             ack = frame;
-
             expectedframe++;
         }
         else
         {
-            printf("Frame %d discarded\n",
-                   frame);
+            printf("Frame %d discarded\n", frame);
         }
 
-        // Send cumulative ACK
-        sprintf(buffer,
-                "%d",
-                ack);
+        // Convert acknowledgment to string
+        sprintf(str, "%d", ack);
 
-        sendto(sockfd,
-               buffer,
-               strlen(buffer) + 1,
-               0,
-               (struct sockaddr *)&client,
-               clientlen);
+        // Send acknowledgment
+        send(newsockfd,str,strlen(str) + 1,0);
 
-        printf("Acknowledgment sent: %d\n",
-               ack);
+        printf("Acknowledgment sent: %d\n", ack);
     }
 
+    // Close sockets
+    close(newsockfd);
     close(sockfd);
 
     return 0;
