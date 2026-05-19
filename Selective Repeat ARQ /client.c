@@ -8,31 +8,20 @@
 
 int main()
 {
-    int sockfd;
-
+    int sockfd, readval;
     struct sockaddr_in server;
-
-    socklen_t serverlen = sizeof(server);
-
-    char buffer[100];
-
-    int windowsize = 5;
-
-    int i;
+    char str[100];
+    int i, ack,windowsize = 5;
+    int ;
     int ack;
-    int readval;
 
-    // Create UDP socket
-    sockfd = socket(AF_INET,
-                    SOCK_DGRAM,
-                    0);
-
+    // Create TCP socket
+    sockfd = socket(AF_INET,SOCK_STREAM,0);
     if (sockfd < 0)
     {
         printf("Socket creation failed\n");
         return 0;
     }
-
     printf("Socket successfully created\n");
 
     // Initialize structure
@@ -41,46 +30,34 @@ int main()
     // Server details
     server.sin_family = AF_INET;
     server.sin_port = htons(8080);
+    inet_pton(AF_INET,"127.0.0.1",&server.sin_addr);
 
-    inet_pton(AF_INET,
-              "127.0.0.1",
-              &server.sin_addr);
+    // Connect to server
+    if (connect(sockfd,(struct sockaddr *)&server,sizeof(server)) < 0)
+    {
+        printf("Connection failed\n");
+        return 0;
+    }
+
+    printf("Connected to server\n");
 
     // Send frames
     printf("Sending frames...\n");
 
     for (i = 0; i < windowsize; i++)
     {
-        sprintf(buffer,
-                "%d",
-                i);
-
-        sendto(sockfd,
-               buffer,
-               strlen(buffer) + 1,
-               0,
-               (struct sockaddr *)&server,
-               serverlen);
-
-        printf("Sent frame %d\n",
-               i);
+        sprintf(str,"%d",i);
+        seid(sockfd,str,strlen(str) + 1,0);
+        printf("Sent frame %d\n",i);
 
         // Receive ACK
-        readval = recvfrom(sockfd,
-                           buffer,
-                           sizeof(buffer),
-                           0,
-                           NULL,
-                           NULL);
+        readval = read(sockfd,str,sizeof(str));
 
         if (readval > 0)
         {
-            buffer[readval] = '\0';
-
-            ack = atoi(buffer);
-
-            printf("Received ACK for frame %d\n",
-                   ack);
+            str[readval] = '\0';
+            ack = atoi(str);
+            printf("Received ACK for frame %d\n",ack);
         }
         else
         {
@@ -94,33 +71,22 @@ int main()
     // Retransmit remaining frames
     for (; i < windowsize; i++)
     {
-        sprintf(buffer,
-                "%d",
-                i);
+        sprintf(str,"%d",i);
 
-        sendto(sockfd,
-               buffer,
-               strlen(buffer) + 1,
-               0,
-               (struct sockaddr *)&server,
-               serverlen);
+        send(sockfd,str,strlen(str) + 1,0);
 
-        printf("Resent frame %d\n",
-               i);
+        printf("Resent frame %d\n",i);
 
-        readval = recvfrom(sockfd,
-                           buffer,
-                           sizeof(buffer),
-                           0,
-                           NULL,
-                           NULL);
+        readval = read(sockfd, str, sizeof(str));
 
-        buffer[readval] = '\0';
+        if (readval > 0)
+        {
+            str[readval] = '\0';
 
-        ack = atoi(buffer);
+            ack = atoi(str);
 
-        printf("Received ACK for frame %d\n",
-               ack);
+            printf("Received ACK for frame %d\n",ack);
+        }
     }
 
     printf("\nAll frames sent successfully\n");
