@@ -9,15 +9,11 @@
 int main()
 {
     int sockfd, newsockfd, readval, frame;
-
     struct sockaddr_in server, client;
-
     socklen_t clientlen = sizeof(client);
-
     char str[100];
 
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
     if (sockfd < 0)
     {
         printf("Socket creation failed\n");
@@ -30,9 +26,7 @@ int main()
     server.sin_port = htons(8080);
     server.sin_addr.s_addr = INADDR_ANY;
 
-    if (bind(sockfd,
-             (struct sockaddr *)&server,
-             sizeof(server)) < 0)
+    if (bind(sockfd,(struct sockaddr *)&server,sizeof(server)) < 0)
     {
         printf("Binding failed\n");
         return 0;
@@ -46,9 +40,7 @@ int main()
 
     printf("Server listening on port 8080\n");
 
-    newsockfd = accept(sockfd,
-                       (struct sockaddr *)&client,
-                       &clientlen);
+    newsockfd = accept(sockfd,(struct sockaddr *)&client,&clientlen);
 
     if (newsockfd < 0)
     {
@@ -62,9 +54,7 @@ int main()
     {
         memset(str, 0, sizeof(str));
 
-        readval = read(newsockfd,
-                       str,
-                       sizeof(str));
+        readval = read(newsockfd,str,sizeof(str));
 
         if (readval <= 0)
         {
@@ -76,15 +66,11 @@ int main()
 
         sscanf(str, "%d", &frame);
 
-        printf("Received frame %d\n",
-               frame);
+        printf("Received frame %d\n",frame);
 
         sprintf(str, "%d", frame);
 
-        send(newsockfd,
-             str,
-             strlen(str) + 1,
-             0);
+        send(newsockfd,str,strlen(str) + 1,0);
 
         printf("Acknowledgment sent for frame %d\n",
                frame);
