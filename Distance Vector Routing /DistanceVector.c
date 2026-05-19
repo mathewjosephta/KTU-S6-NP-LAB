@@ -1,100 +1,54 @@
-#include <stdio.h>
-
-#define MAX 20
-
-struct node
-{
-    unsigned dist[MAX];
-    unsigned from[MAX];
-};
-
-struct node rt[MAX];
+#include<stdio.h>
 
 int main()
 {
-    int cost[MAX][MAX];
+    int cost[10][10];
+    int dist[10][10];
 
     int n;
     int i, j, k;
-    int count;
 
-    // Input number of nodes
-    printf("Enter number of nodes (max %d): ", MAX);
+    printf("Enter number of nodes: ");
     scanf("%d", &n);
 
-    // Check validity
-    if (n <= 0 || n > MAX)
-    {
-        printf("Invalid number of nodes\n");
-        return 0;
-    }
+    printf("Enter cost matrix:\n");
 
-    printf("Use 999 to represent infinity\n");
-
-    // Input cost matrix
-    for (i = 0; i < n; i++)
+    for(i = 0; i < n; i++)
     {
-        for (j = 0; j < n; j++)
+        for(j = 0; j < n; j++)
         {
-            printf("Cost from node %d to node %d: ",
-                   i + 1, j + 1);
-
             scanf("%d", &cost[i][j]);
 
-            rt[i].dist[j] = cost[i][j];
-            rt[i].from[j] = j;
+            dist[i][j] = cost[i][j];
         }
-
-        // Distance to itself is 0
-        cost[i][i] = 0;
-        rt[i].dist[i] = 0;
-        rt[i].from[i] = i;
     }
 
     // Distance Vector Algorithm
-    do
+    for(k = 0; k < n; k++)
     {
-        count = 0;
-
-        for (i = 0; i < n; i++)
+        for(i = 0; i < n; i++)
         {
-            for (j = 0; j < n; j++)
+            for(j = 0; j < n; j++)
             {
-                for (k = 0; k < n; k++)
+                if(dist[i][j] > cost[i][k] + dist[k][j])
                 {
-                    // Update shortest distance
-                    if (rt[i].dist[j] >
-                        cost[i][k] + rt[k].dist[j])
-                    {
-                        rt[i].dist[j] =
-                            cost[i][k] + rt[k].dist[j];
-
-                        rt[i].from[j] = k;
-
-                        count++;
-                    }
+                    dist[i][j] = cost[i][k] + dist[k][j];
                 }
             }
         }
+    }
 
-    } while (count != 0);
+    // Display shortest distances
+    printf("\nShortest Distance Matrix:\n");
 
-    // Display routing tables
-    printf("\n--- Routing Tables ---\n");
-
-    for (i = 0; i < n; i++)
+    for(i = 0; i < n; i++)
     {
-        printf("\nRouting table for router %d:\n", i + 1);
-
-        printf("Destination\tNext Hop\tDistance\n");
-
-        for (j = 0; j < n; j++)
+        for(j = 0; j < n; j++)
         {
-            printf("%d\t\t%d\t\t%d\n",
-                   j + 1,
-                   rt[i].from[j] + 1,
-                   rt[i].dist[j]);
+            printf("%d\t", dist[i][j]);
         }
+
+        printf("\n");
     }
 
     return 0;
