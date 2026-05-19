@@ -8,76 +8,61 @@
 
 int main()
 {
-int sockfd,frame=0,totalframes,ack,readval;
+     int sockfd,readval,frame=0,totalframes,ack;
+     struct sockaddr_in server;
+     char str[100];
 
-struct sockaddr_in server;
+     sockfd=socket(AF_INET,SOCK_STREAM,0);
+     if(sockfd<0)
+     {
+          printf("Socket creation failed\n");
+          return 0;
+     }
 
-char str[100];
+     printf("Socket created successfully\n");
 
-sockfd=socket(AF_INET,SOCK_STREAM,0);
+     memset(&server,0,sizeof(server));
 
-if(sockfd<0)
-{
-printf("Socket creation failed\n");
-return 0;
-}
+     server.sin_family=AF_INET;
+     server.sin_port=htons(8080);
+     inet_pton(AF_INET,"127.0.0.1",&server.sin_addr);
 
-printf("Socket created successfully\n");
+     if(connect(sockfd,(struct sockaddr *)&server,sizeof(server))<0)
+     {
+          printf("Connection failed\n");
+          return 0;
+     }
 
-memset(&server,0,sizeof(server));
+     printf("Connected to server\n");
+     printf("Enter total number of frames: ");
+     scanf("%d",&totalframes);
 
-server.sin_family=AF_INET;
-server.sin_port=htons(8080);
+     while(frame<totalframes)
+     {
+          sprintf(str,"%d",frame);
+          send(sockfd,str,strlen(str)+1,0);
+          printf("Sent frame %d\n",frame);
 
-inet_pton(AF_INET,"127.0.0.1",&server.sin_addr);
+          memset(str,0,sizeof(str));
 
-if(connect(sockfd,(struct sockaddr *)&server,sizeof(server))<0)
-{
-printf("Connection failed\n");
-return 0;
-}
+          readval=read(sockfd,str,sizeof(str));
 
-printf("Connected to server\n");
+          if(readval>0)
+          {
+               str[readval]='\0';
+               ack=atoi(str);
+               printf("Received acknowledgment for frame %d\n",ack);
+               frame++;
+          }
+          else
+          {
+          printf("Acknowledgment not received\n");
+          }
+     }
 
-printf("Enter total number of frames: ");
-scanf("%d",&totalframes);
+     printf("All frames sent successfully\n");
 
-while(frame<totalframes)
-{
-sprintf(str,"%d",frame);
+     close(sockfd);
 
-send(sockfd,
-     str,
-     strlen(str)+1,
-     0);
-
-printf("Sent frame %d\n",frame);
-
-memset(str,0,sizeof(str));
-
-readval=read(sockfd,
-             str,
-             sizeof(str));
-
-if(readval>0)
-{
-str[readval]='\0';
-
-ack=atoi(str);
-
-printf("Received acknowledgment for frame %d\n",ack);
-
-frame++;
-}
-else
-{
-printf("Acknowledgment not received\n");
-}
-}
-
-printf("All frames sent successfully\n");
-
-close(sockfd);
-
-return 0;
+     return 0;
 }
