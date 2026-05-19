@@ -8,19 +8,15 @@
 
 int main()
 {
-    int sockfd, newsockfd;
-    int frame, readval;
+    int sockfd, newsockfd, readval, frame;
 
     struct sockaddr_in server, client;
 
     socklen_t clientlen = sizeof(client);
 
-    char buffer[100];
+    char str[100];
 
-    // Create TCP socket
-    sockfd = socket(AF_INET,
-                    SOCK_STREAM,
-                    0);
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
     if (sockfd < 0)
     {
@@ -28,15 +24,12 @@ int main()
         return 0;
     }
 
-    // Initialize structure
     memset(&server, 0, sizeof(server));
 
-    // Server details
     server.sin_family = AF_INET;
     server.sin_port = htons(8080);
     server.sin_addr.s_addr = INADDR_ANY;
 
-    // Bind socket
     if (bind(sockfd,
              (struct sockaddr *)&server,
              sizeof(server)) < 0)
@@ -45,7 +38,6 @@ int main()
         return 0;
     }
 
-    // Listen for client
     if (listen(sockfd, 3) < 0)
     {
         printf("Listening failed\n");
@@ -54,7 +46,6 @@ int main()
 
     printf("Server listening on port 8080\n");
 
-    // Accept connection
     newsockfd = accept(sockfd,
                        (struct sockaddr *)&client,
                        &clientlen);
@@ -67,14 +58,13 @@ int main()
 
     printf("Connection established\n");
 
-    // Receive frames
     while (1)
     {
-        memset(buffer, 0, sizeof(buffer));
+        memset(str, 0, sizeof(str));
 
         readval = read(newsockfd,
-                       buffer,
-                       sizeof(buffer));
+                       str,
+                       sizeof(str));
 
         if (readval <= 0)
         {
@@ -82,19 +72,18 @@ int main()
             break;
         }
 
-        buffer[readval] = '\0';
+        str[readval] = '\0';
 
-        sscanf(buffer, "%d", &frame);
+        sscanf(str, "%d", &frame);
 
         printf("Received frame %d\n",
                frame);
 
-        // Send acknowledgment
-        sprintf(buffer, "%d", frame);
+        sprintf(str, "%d", frame);
 
         send(newsockfd,
-             buffer,
-             strlen(buffer) + 1,
+             str,
+             strlen(str) + 1,
              0);
 
         printf("Acknowledgment sent for frame %d\n",
