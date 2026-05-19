@@ -1,102 +1,83 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<unistd.h>
+#include<arpa/inet.h>
+#include<sys/socket.h>
+#include<netinet/in.h>
 
 int main()
 {
-    int sockfd;
-    int frame = 0;
-    int totalframes;
-    int ack, readval;
+int sockfd,frame=0,totalframes,ack,readval;
 
-    struct sockaddr_in server;
+struct sockaddr_in server;
 
-    char buffer[100];
+char str[100];
 
-    // Create TCP socket
-    sockfd = socket(AF_INET,
-                    SOCK_STREAM,
-                    0);
+sockfd=socket(AF_INET,SOCK_STREAM,0);
 
-    if (sockfd < 0)
-    {
-        printf("Socket creation failed\n");
-        return 0;
-    }
+if(sockfd<0)
+{
+printf("Socket creation failed\n");
+return 0;
+}
 
-    printf("Socket created successfully\n");
+printf("Socket created successfully\n");
 
-    // Initialize structure
-    memset(&server, 0, sizeof(server));
+memset(&server,0,sizeof(server));
 
-    // Server details
-    server.sin_family = AF_INET;
-    server.sin_port = htons(8080);
+server.sin_family=AF_INET;
+server.sin_port=htons(8080);
 
-    inet_pton(AF_INET,
-              "127.0.0.1",
-              &server.sin_addr);
+inet_pton(AF_INET,"127.0.0.1",&server.sin_addr);
 
-    // Connect to server
-    if (connect(sockfd,
-                (struct sockaddr *)&server,
-                sizeof(server)) < 0)
-    {
-        printf("Connection failed\n");
-        return 0;
-    }
+if(connect(sockfd,(struct sockaddr *)&server,sizeof(server))<0)
+{
+printf("Connection failed\n");
+return 0;
+}
 
-    printf("Connected to server\n");
+printf("Connected to server\n");
 
-    // Input total frames
-    printf("Enter total number of frames: ");
-    scanf("%d", &totalframes);
+printf("Enter total number of frames: ");
+scanf("%d",&totalframes);
 
-    // Send frames
-    while (frame < totalframes)
-    {
-        sprintf(buffer, "%d", frame);
+while(frame<totalframes)
+{
+sprintf(str,"%d",frame);
 
-        // Send frame
-        send(sockfd,
-             buffer,
-             strlen(buffer) + 1,
-             0);
+send(sockfd,
+     str,
+     strlen(str)+1,
+     0);
 
-        printf("Sent frame %d\n",
-               frame);
+printf("Sent frame %d\n",frame);
 
-        memset(buffer, 0, sizeof(buffer));
+memset(str,0,sizeof(str));
 
-        // Receive acknowledgment
-        readval = read(sockfd,
-                       buffer,
-                       sizeof(buffer));
+readval=read(sockfd,
+             str,
+             sizeof(str));
 
-        if (readval > 0)
-        {
-            buffer[readval] = '\0';
+if(readval>0)
+{
+str[readval]='\0';
 
-            ack = atoi(buffer);
+ack=atoi(str);
 
-            printf("Received acknowledgment for frame %d\n",
-                   ack);
+printf("Received acknowledgment for frame %d\n",ack);
 
-            frame++;
-        }
-        else
-        {
-            printf("Acknowledgment not received\n");
-        }
-    }
+frame++;
+}
+else
+{
+printf("Acknowledgment not received\n");
+}
+}
 
-    printf("All frames sent successfully\n");
+printf("All frames sent successfully\n");
 
-    close(sockfd);
+close(sockfd);
 
-    return 0;
+return 0;
 }
